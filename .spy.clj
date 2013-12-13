@@ -6,12 +6,12 @@
                     excludes))))
 
 (def exclude-classes
-  [["com.bm.xchange.util" ["*"]]
-   ["com.bm.xchange.db" ["DBObject" "Crit"]]])
+  [["java.lang.reflect" ["*"]]
+   ["org.apache.cassandra.serializer" ["AbstractTextSerializer" "TextSerializer"]]])
 
 (defn spy []
   (spy-on :host "localhost"
-          :port 5002
-          :classes "com.bm.xchange.services.*"
+          :port 5005
+          :classes "org.apache.cassandra.*"
           :exclude (build-exclude-list exclude-classes))
   (spy/start))

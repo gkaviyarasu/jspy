@@ -2,6 +2,8 @@
   (:use [nodes]
         [tree]
         [gui]
+        [ring.adapter.jetty]
+        [spy-web :as web]
         [print :as p :only ()])
   (:import
    [nodes ArgumentNode MethodEntryNode MethodExitNode
@@ -16,8 +18,9 @@
     ExceptionEvent StepEvent]
    [com.sun.tools.jdi SocketAttachingConnector]))
 
+
 (def common-excludes ["java.*" "com.sun.*" "sun.*"
-                      "net.*" "org.*" "swank.*"
+                      "net.*" "swank.*"
                       "clojure.*"])
 
 (def opts (atom {:includes nil
@@ -25,6 +28,34 @@
                  :host "localhost"
                  :port 5002
                  :exclude-methods nil}))
+
+;; Utility methods to controll the behavior of tracing
+(defn remove-exclude [e]
+  (comment
+    remove from the excludes so that these classes are also traced, for
+   example com.sun.* is excluded by default, to include them in tracing
+   use (remove-exclude "com.sun.*")
+   )
+  (swap! opts
+         conj
+         {:excludes (remove #{e} (:excludes @opts))}))
+
+(defn exclude [e]
+  (swap! opts
+         conj
+         {:excludes (conj (:excludes @opts) e)}))
+
+(defn exclude-method [e]
+  (swap! opts
+         conj
+         {:exclude-methods (conj (:exclude-methods @opts) e)}))
+
+(defn exit [] 
+  (System/exit 0)
+)
+
+(defonce server (run-jetty #'web/app {:port 8585 :join? false}))
+
 
 (defn spy-on [& {:keys [host port classes
                         exclude exclude-methods]}]
@@ -38,16 +69,6 @@
 
 (defn port [p]
   (swap! opts conj {:port p}))
-
-(defn remove-exclude [e]
-  (swap! opts
-         conj
-         {:excludes (remove #{e} (:excludes @opts))}))
-
-(defn exclude [e]
-  (swap! opts
-         conj
-         {:excludes (conj (:excludes @opts) e)}))
 
 (defn attach [host port]
   (let [conn (SocketAttachingConnector.)
