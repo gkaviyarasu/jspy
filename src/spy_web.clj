@@ -14,16 +14,26 @@
    :headers {"Content-Type" "application/json"}
    :body (json/generate-string data)})
 
-(defroutes handler
+(defn create-json [few-method-tree visited-nodes]
+  (defn extract-relevant-part [x]
+    {:id (:id x) :type "entry" :methodName (str (:method x)) :children  (map extract-relevant-part (:children x))})
+  (binding [clj-json.core/*coercions* 
+            {nodes.MethodEntryNode extract-relevant-part,
+            nodes.MethodExitNode (fn[x] {:id (:id x) :type "exit"})}
+            ]
+    (json/generate-string few-method-tree)))
+
+(defroutes handler 
   (GET "/" [] (json-response {"hello" "world"}))
-  (PUT "/" [name] (json-response {"hello" name}))
-  (GET "/start" [] (json-response {"hello" "world"}))
-  (GET "/tree" [] (json-response {"response" "tree"}))
+  (PUT "/name" [name] (json-response {"hello" name}))
+  (POST "/debug" [action port] (json-response {"hello" action}))
+  (GET "/tree" [] {:status 200 :headers {"Content-Type" "application/json"} :body (create-json (:data @current-trace) #{})})
   (route/resources "/")
 )
 
 (defn set-current-trace [data]
   (swap! current-trace conj {:data data})
+  (print "done")
 )
 
 (def app

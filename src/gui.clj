@@ -69,11 +69,9 @@
 
 
 (defn- make-node [node-obj parent]
-  ;; (let [n (DefaultMutableTreeNode. node-obj)]
-  (let [n (AltTreeNode. node-obj nil [])]
-    (when parent
-      ;; (.add parent n))
-      (assoc parent :children (conj (:children parent) n)))
+  (let [n (DefaultMutableTreeNode. node-obj)]
+   (when parent
+      (.add parent n))
     n))
 
 (defn- add-later [parent child]

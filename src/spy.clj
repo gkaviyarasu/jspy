@@ -359,6 +359,10 @@
           (p/print-methods v))
         (thread-grouped-method-tree data))))
 
+(defn data []
+  (when @recorder
+    ((:data @recorder))))
+
 (defn load-spy-config []
   (try
     (load-file ".spy.clj")
@@ -366,17 +370,14 @@
 
 (defn stop []
   (when @recorder
-    ((:stop @recorder))))
+    ((:stop @recorder))
+    (web/set-current-trace (thread-grouped-method-tree (data)))))
 
 (defn start
   ([]
      (stop)
      (load-spy-config)
      (reset! recorder (make-recorder))))
-
-(defn data []
-  (when @recorder
-    ((:data @recorder))))
 
 (defn save []
   (binding [*out* (java.io.FileWriter. "spy-tape")]

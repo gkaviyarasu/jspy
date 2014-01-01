@@ -1,8 +1,77 @@
-<html>
-<head>
-<title>Trace Details</title>
-</head>
-<body>
-Some contents
-</body>
+<!DOCTYPE html >
+<html lan="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>jSpy</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://raw.github.com/sans-sense/Utils/master/js/tree/borrowed/mktree.css" >
+    <link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/css/bootstrap-responsive.min.css" rel="stylesheet">
+    <style>
+      body {
+        padding-top: 20px;
+      }
+      #tree-data {
+         height:200px
+      }
+	/* Turn off list bullets */
+	ul.mktree  li { list-style: none; } 
+	/* Control how "spaced out" the tree is */
+	ul.mktree, ul.mktree ul , ul.mktree li { margin-left:10px; padding:0px; }
+	/* Provide space for our own "bullet" inside the LI */
+	ul.mktree  li           .bullet { padding-left: 15px; }
+	/* Show "bullets" in the links, depending on the class of the LI that the link's in */
+	ul.mktree  li.liOpen    .bullet { cursor: pointer; background: url(minus.gif)  center left no-repeat; }
+	ul.mktree  li.liClosed  .bullet { cursor: pointer; background: url(plus.gif)   center left no-repeat; }
+	ul.mktree  li.liBullet  .bullet { cursor: default; background: url(bullet.gif) center left no-repeat; }
+	/* Sublists are visible or not based on class of parent LI */
+	ul.mktree  li.liOpen    ul { display: block; }
+	ul.mktree  li.liClosed  ul { display: none; }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+      </div>
+      <div class="row">
+        <div class="span6" id="attachDiv">
+          <form class="form-inline" role="form">
+            <input type="integer" class="form-control" id="port" placeholder="Enter Debug Port Number">
+            <button id="attach" type="button" class="btn btn-primary">Attach</button>
+          <button id="detach" type="button" class="btn" disabled>Detach</button>
+          </form>
+        </div>
+        <div class="span6" id="searchDiv">
+          <input type="text" id="searchTree" placeholder="Search by class name"></input> 
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <div class="well" id="result-container">
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.0.beta6/handlebars.min.js"></script>
+    <script type="text/javascript" src="https://raw.github.com/sans-sense/Utils/master/js/tree/borrowed/mktree.js"></script>
+    <script id="tree-template" type="text/x-handlebars-template">
+      <p><h4>{{name}}</h4></p>
+      <ul class='mktree'>
+        {{#recursive children}}
+        <li class="liClosed">{{methodName}} {{threadName}}
+          {{#if children}}
+          <ul>
+            {{{recursive children}}}
+          </ul>
+          {{/if}}
+        </li>
+        {{/recursive}}
+      </ul>
+    </script>
+    <script type="text/javascript" src="jspy.js"></script>
+  </body>
 </html>
