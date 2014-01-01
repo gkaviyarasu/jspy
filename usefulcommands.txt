@@ -1,0 +1,4 @@
+(def single-node  (take 10 (data)))
+(def single-method-tree (thread-grouped-method-tree single-node))
+(count (filter (fn [node] (instance? MethodEntryNode node)) (data)))
+

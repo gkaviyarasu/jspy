@@ -27,3 +27,6 @@ A simple java trace utility
     
     Copyright (C) 2011 BMLs
     Distributed under the Eclipse Public License, the same as Clojure.
+
+## Cheat-Sheet  
+   (use 'spy-web :reload-all)

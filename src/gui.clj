@@ -15,6 +15,8 @@
 (def width (* height 1.618))
 (def truncate-size 25)
 
+(defrecord AltTreeNode [payload parent children])
+
 (defn trunc [s]
   (if (instance? String s)
     (if (<= (.length s) truncate-size)
@@ -65,10 +67,13 @@
                (format-args args "," true)
                (format-return return return-type true))))
 
+
 (defn- make-node [node-obj parent]
-  (let [n (DefaultMutableTreeNode. node-obj)]
+  ;; (let [n (DefaultMutableTreeNode. node-obj)]
+  (let [n (AltTreeNode. node-obj nil [])]
     (when parent
-      (.add parent n))
+      ;; (.add parent n))
+      (assoc parent :children (conj (:children parent) n)))
     n))
 
 (defn- add-later [parent child]
@@ -82,7 +87,7 @@
                      (map #(add-later node %)
                           (:children method)))))))
 
-(defn- make-thread-nodes [data-map]
+(defn make-thread-nodes [data-map]
   (let [root (make-node "Root Thread" nil)]
     (make-method-nodes
      (map (fn [[thread method-map]]
@@ -94,7 +99,7 @@
 (defn- wrap-html [text]
   (str "<html>" text "</html"))
 
-(defn- make-tree [node]
+(defn make-tree [node]
   (let [tree
         (proxy [JTree] [node]
           (convertValueToText [val sel? exp? leaf? row focus?]

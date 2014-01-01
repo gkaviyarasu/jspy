@@ -4,15 +4,15 @@
 
 (defrecord ArgumentNode [name type value])
 
-(defrecord MethodEntryNode [method thread class args]
+(defrecord MethodEntryNode [id method thread class args]
   HasType (node-type [node] :entry))
 
-(defrecord MethodExitNode [method thread class return-type return]
+(defrecord MethodExitNode [id method thread class return-type return]
   HasType (node-type [node] :exit))
 
-(defrecord ThrowExceptionNode [thread message stack]
+(defrecord ThrowExceptionNode [id thread message stack]
   HasType (node-type [node] :throw))
 
-(defrecord CatchExceptionNode [thread stack]
+(defrecord CatchExceptionNode [id thread stack]
   HasType (node-type [node] :catch))
 

@@ -54,6 +54,8 @@
   (System/exit 0)
 )
 
+(def counter (atom 0))
+
 (defonce server (run-jetty #'web/app {:port 8585 :join? false}))
 
 
@@ -212,7 +214,8 @@
 (defn exit-method [e]
   (let [m (.method #^MethodExitEvent e)
         t (.thread #^MethodExitEvent e)]
-    (MethodExitNode. m
+    (MethodExitNode. (swap! counter inc )
+                     m
                      (.name t)
                      (.name (.declaringType m))
                      (.returnTypeName m)
@@ -233,7 +236,8 @@
                             (.typeName arg)))
                         args
                         arg-values))]
-    (MethodEntryNode. m
+    (MethodEntryNode. (swap! counter inc )
+                      m
                       (.name t)
                       (.name (.declaringType m))
                       (doall
@@ -254,12 +258,12 @@
   (let [t (.thread #^ExceptionEvent e)
         msg (get-value t (.exception #^ExceptionEvent e))]
     (step-request t)
-    (ThrowExceptionNode. (.name t) msg (methods-on-stack t))))
+    (ThrowExceptionNode. (swap! counter inc ) (.name t) msg (methods-on-stack t))))
 
 (defn handle-step [e]
   (let [t (.thread #^StepEvent e)]
     (delete-step-request t)
-    (CatchExceptionNode. (.name t) (methods-on-stack t))))
+    (CatchExceptionNode. (swap! counter inc ) (.name t) (methods-on-stack t))))
 
 (defn make-method [e]
   (cond (instance? MethodEntryEvent e)
@@ -302,7 +306,8 @@
                  poped-methods (drop-last (count (:stack catch))
                                           (:stack throw))]
              (concat (map (fn [m]
-                            (MethodExitNode. m
+                            (MethodExitNode. (swap! counter inc )
+                                             m
                                              (:thread throw)
                                              nil
                                              "Exception"
