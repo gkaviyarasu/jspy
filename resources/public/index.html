@@ -6,9 +6,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://raw.github.com/sans-sense/Utils/master/js/tree/borrowed/mktree.css" >
-    <link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.2.1/css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./lib/bootstrap.2.2.1.min.css" />
+    <link href="./lib/bootstrap-responsive.2.2.1.min.css" rel="stylesheet">
     <style>
       body {
         padding-top: 20px;
@@ -35,13 +34,20 @@
   <body>
     <div class="container">
       <div class="row">
+        <div class="alert alert-success" id="traceStartMsg" style="display:none">
+          <strong>Success!</strong> Tracing started, press stop to get the trace.
+        </div>
+        <div class="alert alert-success" id="traceEndMsg" style="display:none">
+          <strong>Success!</strong> Tracing stopped, Code flow console will show the new tree.
+        </div>
       </div>
       <div class="row">
         <div class="span6" id="attachDiv">
           <form class="form-inline" role="form">
             <input type="integer" class="form-control" id="port" placeholder="Enter Debug Port Number">
-            <button id="attach" type="button" class="btn btn-primary">Attach</button>
-          <button id="detach" type="button" class="btn" disabled>Detach</button>
+            <input type="integer" class="form-control" id="classNamePattern" placeholder="Enter class name pattern like org.apache.cassandra.*">
+            <button id="attach" type="button" class="btn btn-primary">Start</button>
+          <button id="detach" type="button" class="btn" disabled>Stop</button>
           </form>
         </div>
         <div class="span6" id="searchDiv">
@@ -55,9 +61,9 @@
         </div>
       </div>
     </div>
-    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.0.0.beta6/handlebars.min.js"></script>
-    <script type="text/javascript" src="https://raw.github.com/sans-sense/Utils/master/js/tree/borrowed/mktree.js"></script>
+    <script src="./lib/jquery-1.9.1.min.js"></script>
+    <script src="./lib/handlebars-v1.3.0.js"></script>
+    <script type="text/javascript" src="./lib/mktree.js"></script>
     <script id="tree-template" type="text/x-handlebars-template">
       <p><h4>{{name}}</h4></p>
       <ul class='mktree'>

@@ -40,10 +40,9 @@ $(function() {
     $('#attach').click(function(event) {
         var postData; 
         event.preventDefault();
-        postData = '{"action":"start", "port":' + $('#port').val() + '}';
+        postData = '{"action":"start", "port":' + $('#port').val() + ', "classNamePattern":"' + $('#classNamePattern').val() + '"}';
         jsonPost(postData, function(){
-            $('#attach').prop('disabled', true);
-            $('#detach').prop('disabled', false);
+            changeAttachDetach(true);
         });
     });
 
@@ -51,12 +50,23 @@ $(function() {
         var postData = '{"action":"stop"}';
         event.preventDefault();
         jsonPost(postData, function(){
-            $('#attach').prop('disabled', false);
-            $('#detach').prop('disabled', true);
+            changeAttachDetach(false);
             refreshTree("/tree", "Code Flow");
         });
        
     });
+
+    function changeAttachDetach(disableAttach) {
+        $('#attach').prop('disabled', disableAttach);
+        $('#detach').prop('disabled', !disableAttach);
+        showSuccessMessage(disableAttach? "traceStartMsg":"traceEndMsg");
+    }
+
+    function showSuccessMessage(divId) {
+        $('#'+divId).toggle();
+        setTimeout(function(){$('#'+divId).toggle();}, 2000);
+    }
+
 
     function jsonPost(postData, successCallback, failureCallback) {
         $.ajax({
@@ -80,4 +90,5 @@ $(function() {
         });
     }
     refreshTree("/sample.json", "Sample Code Flow");
+    $('#port').focus();
 });

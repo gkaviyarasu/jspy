@@ -46,12 +46,12 @@
 (defroutes handler 
   (GET "/" [] (json-response {"hello" "world"}))
   (PUT "/name" [name] (json-response {"hello" name}))
-  (POST "/debug" [action port] 
+  (POST "/debug" [action port classNamePattern] 
         (json-response {"response" (if (= action "start" )
            (do (spy-command/spy-on 
                 :host "localhost"
                 :port port
-                :classes "org.apache.cassandra.*"
+                :classes classNamePattern
                 :exclude (build-exclude-list exclude-classes))
                (spy-command/start) "started")
            (do (spy-command/stop) 
