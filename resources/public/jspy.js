@@ -20,10 +20,10 @@ $(function() {
 
     var source   = $("#tree-template").html();
     var template = Handlebars.compile(source);
-    function refreshTree(url) {
+    function refreshTree(url, flowName) {
         $.getJSON( url , function( data ) {
             var i;
-            var tree = {name:"Sample Code Flow", children: []};
+            var tree = {name:flowName, children: []};
             for (i in data) {
                 tree.children.push( {"threadName":i, children:data[i].children})
             }
@@ -53,7 +53,7 @@ $(function() {
         jsonPost(postData, function(){
             $('#attach').prop('disabled', false);
             $('#detach').prop('disabled', true);
-            refreshTree("/tree");
+            refreshTree("/tree", "Code Flow");
         });
        
     });
@@ -79,5 +79,5 @@ $(function() {
             }
         });
     }
-    refreshTree("/sample.json");
+    refreshTree("/sample.json", "Sample Code Flow");
 });
