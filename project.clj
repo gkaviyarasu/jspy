@@ -1,5 +1,7 @@
 (def tools-home [(format "%s/lib/tools.jar" (System/getenv "JAVA_HOME"))])
 
+;; (def tools-home ["<some-path>/tools.jar"])
+
 (defproject spy "1.0.0-SNAPSHOT"
   :description "Simple trace utility for java programs, refer to README.md for details"
   :dependencies [[org.clojure/clojure "1.5.1"]

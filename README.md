@@ -10,17 +10,13 @@ A simple java trace utility
 ## Usage
 
 - Checkout into a directory (say *spy*)
-- `project.clj`: point `tools.jar` to the one in your JDK
-- Change `.spy.clj`
-  - Change `:host` and `:port` to point to the remote debug session
-  - Set `:classes` to the base package of the classes to trace
-  - Optionally, change `exclude-classes` list to packages/classes you want to exclude from trace
 - Start repl (in the shell): `spy$ bin/lein repl`
-- Start spy: `spy=> (spy)`
 
     This is assuming remote debug session is already started with jvm args `-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=<port-number>`
-
-- Show trace (and stop spy): `spy=> (gui)`
+    
+- Server is started on port 8585, connect to http://localhost:8585
+- Fill in the port number and click on attach
+- To see the trace click on detach
 - Exit with `Ctrl-C`
 
 ## License
@@ -28,5 +24,9 @@ A simple java trace utility
     Copyright (C) 2011 BMLs
     Distributed under the Eclipse Public License, the same as Clojure.
 
-## Cheat-Sheet  
-   (use 'spy-web :reload-all)
+## Under the hood
+Depends on java debug, captures all the method entry and exit events and creates a tree out of it.
+
+## Troubleshooting  
+1. If http port 8585 is already bound to some other process, change the port in spy.clj at the last line  
+1. If JAVA_HOME is not set, edit tools-home in project.clj 
