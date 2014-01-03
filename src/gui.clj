@@ -219,11 +219,11 @@
           (match-text model text) model
           :else (find-model-with-text (rest models) text))))
       
-(defn select-tree-node [tree node]
-  (when node
-    (let [path (spy.Utils/nodeToPath node)]
-      (.setSelectionPath tree path)
-      (.scrollPathToVisible tree path))))
+(defn select-tree-node [tree node])
+  ;; (when node
+  ;;   (let [path (spy.Utils/nodeToPath node)]
+  ;;     (.setSelectionPath tree path)
+  ;;     (.scrollPathToVisible tree path))))
 
 (defn find-in-tree [tree text]
   (let [selected (selected-model tree)

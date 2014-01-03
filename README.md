@@ -4,13 +4,13 @@ A simple java trace utility
 
 ## Requirements
 
-1. Lein 1 (didn't move to lein 2 yet)
+1. Lein 1 or 2 
 2. JDK 1.6
 
 ## Usage
 
 - Checkout into a directory (say *spy*)
-- Start repl (in the shell): `spy$ bin/lein repl`
+- Start repl (in the shell): `spy$ bin/lein repl` or `lein repl`
 
     This is assuming remote debug session is already started with jvm args `-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=<port-number>`
     
