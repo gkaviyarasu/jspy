@@ -1,0 +1,25 @@
+<html>
+	<head>
+		<link href="/lib/jumly/styles/jumly.min.css" rel='stylesheet'/>
+		<link href="/lib/jumly/styles/jumly.skin.fancy.css" rel='stylesheet'/>	
+		<link href="/sequence/jumly.overrides.css" rel='stylesheet'/>			
+		<script src="/lib/jquery-1.9.1.min.js"></script>
+		<script src="/lib/coffee-script-1.7.1.min.js"></script>
+		<script src="/lib/jumly/jumly-0.1.5.min.js"></script>
+		<script src="/sequence/jspy-sequence-renderer.js"></script>
+		<script>
+			$.ready = function(){
+				 $.getJSON( '/sample.json' , function( jsonData ) {
+					for(key in jsonData){						
+						JSPY.renderSequence($('#sequence-container'), key, jsonData[key].children);
+						break;
+					}
+				 });
+			};
+		</script>
+	</head>
+	<body>
+		<div id="sequence-container" class="fancy">
+		</div>
+	</body>
+</html>

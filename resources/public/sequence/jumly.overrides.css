@@ -1,0 +1,17 @@
+.fancy .sequence-diagram .participant:nth-child(3) .name {
+	width : 300px;
+	text-overflow: ellipsis;
+	overflow:hidden;
+	margin-left:0px;
+}
+.sequence-diagram .sequence-diagram-header{
+	position: absolute;
+	z-index:100;
+}
+.sequence-diagram .sequence-diagram-body{
+	padding-top:40px;
+}
+.fancy .sequence-diagram .participant{
+	background: #FFF;
+	width : 300px;
+}
