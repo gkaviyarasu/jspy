@@ -5,8 +5,8 @@ var JSPY = JSPY || {};
 								function appendNode(jsonNode, level){
 									var returnSplits = splitClassnMethod(jsonNode.methodName),
 											text = [spaceStr(2 * level),
-													'@message "',returnSplits[1],
-													'", "',returnSplits[0],'"'].join(''),
+													'@message "',returnSplits[1],'", ',
+													'"',returnSplits[0],'" '].join(''),
 											returntextArr = [];															
 									if(jsonNode.children && jsonNode.children.length > 0){
 										text += ', ->';
@@ -29,46 +29,38 @@ var JSPY = JSPY || {};
 									var splits = str[0].split('.'),
 										totalSplits = splits.length,
 										returnSplits = [];
-
 									returnSplits.push(splits[totalSplits-2]);
 									returnSplits.push(splits[totalSplits-1]+'('+str[1]);
 									return returnSplits;
 								}
 								return {
-									"render" : function(element, title, children){
+									"render" : function(element, json){
 										var textArr = [],
-											container = $(element);
-
-										textArr.push('@found "'+title+'", ->');
-										$.each(children, function(){
-											textArr = textArr.concat(appendNode(this,  1));
-										});
+											container = $(element),
+											headerContainer = $('<div class="sequence-diagram-header"></div>'),
+											bodyContainer = $('<div class="sequence-diagram-body"></div>'),
+											sequenceContainer;
 										container.empty();
+										textArr.push('@found "Start", ->');
+										textArr = textArr.concat(appendNode(json,  1));
 										container.text(textArr.join('\n'));
 										JUMLY.eval(container, {
 											'into' : container
 										});
-										var headerContainer = $('<div class="sequence-diagram-header"></div>');
-										var bodyContainer = $('<div class="sequence-diagram-body"></div>');
-										var sequenceContainer = container.find('.sequence-diagram');
+										sequenceContainer = container.find('.sequence-diagram');
 										headerContainer.append(sequenceContainer.find('.participant, .horizontal'));
 										bodyContainer.append(sequenceContainer.find('>:not(.participant)'));
 										sequenceContainer.append(headerContainer);
 										sequenceContainer.append(bodyContainer);
-										$(window).scroll(function(){
-											headerContainer.hide();
-											headerContainer.css('top', '0px');
-											headerContainer.css('top', $(window).scrollTop(),+'px');
-											headerContainer.animate({
-												display: "toggle" 
-											},100);
+										container.parent().scroll(function(e){
+											headerContainer.css('top', $(e.target).scrollTop(),+'px');
 										});
 									}
 								};
 							}());
 	
-	JSPY.renderSequence = function(element, title, children){
-		sequenceRenderer.render(element, title, children);
+	JSPY.renderSequence = function(element, json){
+		sequenceRenderer.render(element, json);
 	};
 	
 })(JSPY, jQuery);
