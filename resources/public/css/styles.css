@@ -26,14 +26,14 @@
 	ul.mktree  li { list-style: none; } 
 	/* Control how "spaced out" the tree is */
 	ul.mktree, ul.mktree ul , ul.mktree li { margin-left:0px; padding:0px; font-weight:normal;font-size: 12px;}
-	ul.mktree li span{white-space: nowrap;}
+	ul.mktree li span{white-space: nowrap;padding-left:15px;}
 	ul.mktree li.liClosed,ul.mktree li.liOpen{font-weight:bold;color: #ECFFBD;}
 	/* Provide space for our own "bullet" inside the LI */
 	ul.mktree  li { padding-left: 15px; }
 	/* Show "bullets" in the links, depending on the class of the LI that the link's in */
-	ul.mktree  li.liOpen { cursor: pointer; background: url(/images/down-arrow-white.png)  top left no-repeat; }
-	ul.mktree  li.liClosed { cursor: pointer; background: url(/images/side-arrow-white.png) top left no-repeat; }
-	ul.mktree  li.liBullet { cursor: default; background:  top left no-repeat; }
+	ul.mktree  li.liOpen span { cursor: pointer; background: url(/images/down-arrow-white.png)  top left no-repeat; }
+	ul.mktree  li.liClosed span { cursor: pointer; background: url(/images/side-arrow-white.png) top left no-repeat; }
+	ul.mktree  li.liBullet  span { cursor: default; background:  top left no-repeat; }
 	/* Sublists are visible or not based on class of parent LI */
 	ul.mktree  li.liOpen    ul { display: block; }
 	ul.mktree  li.liClosed  ul { display: none; }
