@@ -47,7 +47,7 @@
 			<div class="section-header">
 				<div class="section-content">									
 					<input type="text" id="searchTree" style="margin:0px;width:95%;" 
-						   placeholder="Search by class name"></input> 
+						   placeholder="Search by class name">
 				</div>
 			</div>
 			<div class="section-body">				
@@ -75,7 +75,7 @@
     <script type="text/javascript" src="./lib/mktree.js"></script>
 	<script type="text/javascript" src="./lib/coffee-script-1.7.1.min.js"></script>
 	<script type="text/javascript" src="./lib/jumly/jumly-0.1.5.min.js"></script>
-	<script type="text/javascript" src="./sequence/jspy-sequence-renderer.js"></script>
+	<!--<script type="text/javascript" src="./sequence/jspy-sequence-renderer.js"></script>-->
 	<script type="text/javascript" src="./lib/layout/jquery.layout.min.js"></script>	
 	<script type="text/javascript" src="./lib/contextMenu/jquery.contextMenu.js"></script>
     <script id="tree-template" type="text/x-handlebars-template">      
@@ -91,6 +91,8 @@
         {{/recursive}}
       </ul>
     </script>
+    <script type="text/javascript" src="lib/d3.v3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jspySequenceWithD3.js"></script>
     <script type="text/javascript" src="./js/jspy.js"></script>
   </body>
 </html>

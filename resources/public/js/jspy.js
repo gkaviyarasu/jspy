@@ -148,7 +148,7 @@ $(function() {
 					if(key == 'sequence'){
 						pageLayout.open('east');
 						var jsonString = generateJson($trigger);
-						JSPY.renderSequence($('#sequence-diagram .section-body .section-content'), jsonString);
+						JSPY_D3.plotIndentedTree(jsonString);
 					}
 				},
 				items: {
