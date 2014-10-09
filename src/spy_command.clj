@@ -19,12 +19,13 @@
 
 (def common-excludes ["java.*" "com.sun.*" "sun.*"
                       "net.*" "swank.*"
-                      "clojure.*"])
+                      "clojure.*" "org.*"])
 
 (def opts (atom {:includes nil
                  :excludes common-excludes
                  :host "localhost"
                  :port 5002
+                 :saveArgs false
                  :exclude-methods nil}))
 
 ;; Utility methods to controll the behavior of tracing
@@ -208,6 +209,28 @@
           :else
           (.toString v))))
 
+(defn method-arg [m t f]
+  (let [args (try
+                   (.arguments m)
+                   (catch Exception e []))
+        arg-values (doall (map #(.getValue f %) args))
+        arg-types (doall
+                   (map (fn [arg val]
+                          (if val
+                            (-> val .type .name)
+                            (.typeName arg)))
+                        args
+                        arg-values))]
+    (doall
+     (map (fn [arg val type]
+            (ArgumentNode. (.name arg)
+                           type
+                           (get-value t val)))
+          args
+          arg-values
+          arg-types))
+    ))
+
 (defn exit-method [e]
   (let [m (.method #^MethodExitEvent e)
         t (.thread #^MethodExitEvent e)]
@@ -221,31 +244,15 @@
 (defn entry-method [e]
   (let [m (.method #^MethodEntryEvent e)
         t (.thread #^MethodEntryEvent e)
-        f (.frame t 0)
-        args (try
-               (.arguments m)
-               (catch Exception e []))
-        arg-values (doall (map #(.getValue f %) args))
-        arg-types (doall
-                   (map (fn [arg val]
-                          (if val
-                            (-> val .type .name)
-                            (.typeName arg)))
-                        args
-                        arg-values))]
+        f (.frame t 0)]
     (MethodEntryNode. (swap! counter inc )
                       m
                       (.name t)
                       (.name (.declaringType m))
-                      (doall
-                       (map (fn [arg val type]
-                              (ArgumentNode. (.name arg)
-                                             type
-                                             (get-value t val)))
-                            args
-                            arg-values
-                            arg-types)))))
+                      (if (:saveArgs opts) (method-arg m t f)))
+    ))
 
+  
 (defn methods-on-stack [thread]
   (doall
    (map #(-> % .location .method)

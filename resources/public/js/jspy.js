@@ -136,33 +136,32 @@ $(function() {
        
     });
 
-	$.contextMenu({
-		selector: '.mktree >li >ul li.liClosed,.mktree >li >ul li.liOpen', 
-		build: function($trigger) {
-			$trigger.addClass('liHighlight');
-			// this callback is executed every time the menu is to be shown
-			// its results are destroyed every time the menu is hidden
-			// e is the original contextmenu event, containing e.pageX and e.pageY (amongst other data)
-			return {
-				callback: function(key) {
-					if(key == 'sequence'){
-						pageLayout.open('east');
-						var jsonString = generateJson($trigger);
-						JSPY_D3.plotIndentedTree(jsonString);
-					}
-				},
-				items: {
-					"sequence": {name: "Sequence", icon: "sequence"}
-				}
-			};
-		},
-		events : {
-			"hide" : function(e){
-				e.$trigger.removeClass('liHighlight');
-			}
-		}
-	});
-	
+    $("#expandAllBtn").click(function(){expandTree("callTree")});
+    $("#collapseAllBtn").click(function(){collapseTree("callTree")});
+    $("#drawSelectedBtn").click(function(){
+        if ($("li.liHighlight").size() > 0) {
+            var highlightedNode = $("li.liHighlight");
+            if (!(highlightedNode.attr("id"))) {
+                highlightedNode = highlightedNode.find(">ul>li");
+                if (highlightedNode.size() < 1) {
+                    highlightedNode = null;
+                }
+            }
+
+            if (highlightedNode) {
+                pageLayout.open('east');
+			    var jsonString = generateJson(highlightedNode);
+			    // JSPY.renderSequence($('#sequence-diagram .section-body .section-content'), jsonString);
+				JSPY_D3.plotIndentedTree(jsonString);
+
+            } else {
+                showSuccessMessage('selectNodeMsg')
+            }
+        } else {
+            showSuccessMessage('selectNodeMsg')
+        }
+    });
+
     refreshTree("/sample.json", "Sample Code Flow");
     $('#port').focus();
 	resetSectionSize();

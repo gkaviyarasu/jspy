@@ -117,7 +117,10 @@ function convertTrees() {
 }
 
 function treeNodeOnclick() {
+    var highlightStyle = "liHighlight";
+    $("li."+highlightStyle).removeClass(highlightStyle)
 	this.parentNode.className = (this.parentNode.className==nodeOpenClass) ? nodeClosedClass : nodeOpenClass;
+    $(this.parentNode).addClass(highlightStyle);
 	return false;
 }
 function retFalse() {

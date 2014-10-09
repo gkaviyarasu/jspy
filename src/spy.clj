@@ -44,8 +44,7 @@
 )
 
 (defroutes handler 
-  (GET "/" [] (json-response {"hello" "world"}))
-  (PUT "/name" [name] (json-response {"hello" name}))
+  (GET "/" [] (redirect "/index.html"))
   (POST "/debug" [action port classNamePattern] 
         (json-response {"response" (if (= action "start" )
            (do (spy-command/spy-on 

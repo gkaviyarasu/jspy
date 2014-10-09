@@ -89,7 +89,7 @@ ul.mktree li.liBullet {
 }
 
 ul.mktree li.liHighlight {
-    color: red;
+    background-color:#5E5E5E
 }
 
 /* layout overrides */

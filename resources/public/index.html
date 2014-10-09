@@ -16,13 +16,16 @@
 	<link href="./css/styles.css" rel='stylesheet'/>
   </head>
   <body>
-	<div class="ui-layout-north  top-header">				
+	<div class="ui-layout-north  top-header">
 		<div class="row">
 			<div class="alert alert-success" id="traceStartMsg" style="display:none">
 				<strong>Success!</strong> Tracing started, press stop to get the trace.
 			</div>
 			<div class="alert alert-success" id="traceEndMsg" style="display:none">
 			  <strong>Success!</strong> Tracing stopped, Code flow console will show the new tree.
+			</div>
+			<div class="alert alert-success" id="selectNodeMsg" style="display:none">
+			  <strong>Info!</strong> Please select a node in the method tree in your lhs with at least one child node.
 			</div>
 		</div>
 		<div>
@@ -32,9 +35,9 @@
 			<div id="attachDiv" style="float:right;">
 				<form class="form-inline" role="form">
 					<input type="text" class="form-control" id="port" 
-						   placeholder="Enter Debug Port Number">
+						   placeholder="Debug Port Number">
 					<input type="text" class="form-control" id="classNamePattern" 
-						   placeholder="Enter class name pattern like org.apache.cassandra.*">
+						   placeholder="com.wm.* like Class Patterns">
 					<button id="attach" type="button" class="btn btn-primary">Start</button>
 					<button id="detach" type="button" class="btn" disabled>Stop</button>
 				</form>
@@ -50,6 +53,18 @@
 						   placeholder="Search by class name">
 				</div>
 			</div>
+            <div class="section-top-nav">
+              <button type="button" class="btn btn-small" id="expandAllBtn" title="Expand all nodes">
+                <span class="icon-plus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-small" id="collapseAllBtn" title="Collapse all nodes">
+                <span class="icon-minus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-small" id="drawSelectedBtn" title="select a node in the tree to plot its sequence diagram">
+                <span class="icon-eye-open"></span>
+              </button>
+
+            </div>
 			<div class="section-body">				
 				<div class="section-content">
 				</div>
@@ -79,9 +94,9 @@
 	<script type="text/javascript" src="./lib/layout/jquery.layout.min.js"></script>	
 	<script type="text/javascript" src="./lib/contextMenu/jquery.contextMenu.js"></script>
     <script id="tree-template" type="text/x-handlebars-template">      
-      <ul class='mktree'>
+      <ul class='mktree' id='callTree'>
         {{#recursive children}}
-        <li class="liClosed">{{methodName}} {{threadName}}
+        <li id="{{id}}" class="liClosed">{{methodName}} {{threadName}}
           {{#if children}}
           <ul>
             {{{recursive children}}}
