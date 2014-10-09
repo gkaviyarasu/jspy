@@ -7,3 +7,7 @@ pom.xml
 *~
 *#*
 spy-tape
+.idea
+target
+.lein-repl-history
+*.iml
