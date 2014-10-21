@@ -146,7 +146,6 @@ div.section div.section-header div.section-content {
 
 div.section div.section-body {
     overflow: auto;
-    color: #fff;
     background-color: white;
 }
 
@@ -209,4 +208,9 @@ path.link {
 
 #sequence-diagram .section-body .section-content{
     background-color: #ffffff;
+}
+
+.ui-layout-toggler {
+    border: 1px solid black;
+    background-color: grey;
 }

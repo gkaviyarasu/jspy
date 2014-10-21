@@ -151,9 +151,11 @@ $(function() {
             if (highlightedNode) {
                 pageLayout.open('east');
 			    var jsonString = generateJson(highlightedNode);
-			    // JSPY.renderSequence($('#sequence-diagram .section-body .section-content'), jsonString);
-				JSPY_D3.plotIndentedTree(jsonString);
-
+                if ($("#renderer").val() === 'callTrace') {
+				    JSPY_D3.plotIndentedTree(jsonString);
+                } else {
+                    JSPY.renderSequence($('#sequence-diagram .section-body .section-content'), jsonString);                    
+                }
             } else {
                 showSuccessMessage('selectNodeMsg')
             }
@@ -162,7 +164,19 @@ $(function() {
         }
     });
 
+    function zoom(zoomIn) {
+        var element = $(".sequence-diagram");
+        var currentZoom = element.attr("zoom") || 1;
+        var zoomBy = (zoomIn)? 0.2:-0.2;
+        var newVal = currentZoom * (1 + zoomBy); 
+        element.css("zoom", newVal);
+        element.attr("zoom", newVal);
+    }
+
+    $("#zoomInBtn").click(function(){zoom(true)})
+    $("#zoomOutBtn").click(function(){zoom(false)})
     refreshTree("/sample.json", "Sample Code Flow");
     $('#port').focus();
 	resetSectionSize();
 });
+ 

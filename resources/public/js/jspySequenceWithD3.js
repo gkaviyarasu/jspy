@@ -18,13 +18,18 @@ var JSPY_D3 = function () {
             return [d.y, d.x];
         });
 
-    var svg = d3.select("#sequence-diagram .section-body .section-content").append("svg")
+
+    function plot(dataSet) {
+        var plotData, svg;
+        //reset whatever was present
+        $("#sequence-diagram .section-body .section-content").html("")
+
+        plotData = dataSet;
+        svg = d3.select("#sequence-diagram .section-body .section-content").append("svg")
         .attr("width", width + margin.left + margin.right)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    function plot(dataSet) {
-        var plotData = dataSet;
         plotData.x0 = 0;
         plotData.y0 = 0;
         update(root = plotData);

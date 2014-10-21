@@ -8,7 +8,6 @@
 	position: relative;
 	z-index:100;
 	padding: 10px;
-	background-color: #333;
 	padding-bottom: 0px;
 }
 .sequence-diagram .participant .name{

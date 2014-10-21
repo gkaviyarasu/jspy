@@ -75,7 +75,17 @@
 		<div id="sequence-diagram" class="section fancy">
 			<div class="section-header">
 				<div class="section-content">
-					<h5 style="margin:0px;">Sequence Diagram :</h5>
+                  <select id="renderer">
+                    <option value="sequenceDia">Sequence Diagram</option>
+                    <option value="callTrace">Call Trace</option>
+                  </select>
+              <button type="button" class="btn btn-small" id="zoomInBtn" title="Zoom In">
+                <span class="icon-plus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-small" id="zoomOutBtn" title="Zoom out">
+                <span class="icon-minus-sign"></span>
+              </button>
+
 				</div>
 			</div>
 			<div class="section-body">				
@@ -90,7 +100,7 @@
     <script type="text/javascript" src="./lib/mktree.js"></script>
 	<script type="text/javascript" src="./lib/coffee-script-1.7.1.min.js"></script>
 	<script type="text/javascript" src="./lib/jumly/jumly-0.1.5.min.js"></script>
-	<!--<script type="text/javascript" src="./sequence/jspy-sequence-renderer.js"></script>-->
+	<script type="text/javascript" src="./sequence/jspy-sequence-renderer.js"></script>
 	<script type="text/javascript" src="./lib/layout/jquery.layout.min.js"></script>	
 	<script type="text/javascript" src="./lib/contextMenu/jquery.contextMenu.js"></script>
     <script id="tree-template" type="text/x-handlebars-template">      
