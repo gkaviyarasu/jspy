@@ -1,9 +1,11 @@
 (ns spy
   (:use [compojure.core]
+        [ring.middleware.params]
         [ring.middleware.json]
         [ring.util.response]
         [ring.adapter.jetty]
         [spy-command]
+        [vm-command]
         )
   (:require [clj-json.core :as json]
             [compojure.route :as route])
@@ -57,12 +59,14 @@
                (set-current-trace (thread-grouped-method-tree (data)))"stopped"))
          }))
   (GET "/tree" [] {:status 200 :headers {"Content-Type" "application/json"} :body (create-json (:data @current-trace) #{})})
+  (GET "/vms" [host] (json-response (list-vms host)))
+  (POST "/vms/attach" [host vmId] (json-response (attach-vms host vmId)))
   (route/resources "/")
 )
 
 
 (def app
   (-> handler
-    wrap-json-params))
+    wrap-json-params wrap-params))
 
 (defonce server (run-jetty #'app {:port 8585 :join? false}))
