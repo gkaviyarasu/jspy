@@ -50,7 +50,7 @@
 
 (defn- load-agent [profiler profiledVm]
       (on-thread #(.loadAgent profiledVm
-                (str (System/getProperty "user.dir") "/sandbox/jrunscriptin/target/custom-agent.jar")
+                (str (System/getProperty "user.dir") "/profiler/agent/target/custom-agent.jar")
                 (.toString (.get-port profiler)))))
 
 (defn- start-profiler-server [profiler]
@@ -69,10 +69,25 @@
   (close-socket (:socket profiler))
   (profiler))
 
+(defn clear-logs []
+  (reset! allThreadCommonLog '()))
+
+(defn show-logs [] allThreadCommonLog)
+
+(defn- add-records
+  ([]  
+     (add-records 
+      (filter 
+       (fn[y](not (.startsWith y "writing to stream"))) 
+       @allThreadCommonLog)))
+  ([x] (if-not (nil? x) (str (last x) (add-records (butlast x))) "")))
+
+
 (defprotocol Profiler
   (start-p [this profiledVM])
   (stop-p [this])
-  (run-script [this])
+  (run-command [this command])
+  (get-result [this waitTime])
   (get-port [this]))
 
 (defprotocol AsyncCommandRunner
@@ -82,21 +97,28 @@
   (set-command [this command]))
 
 (defrecord LocalProfiler [socket commandQ responseQ]
-  Profiler
-  (start-p [this profiledVM] 
-    (start-profiler-server this)
-    (load-agent this profiledVM))
-  (stop-p [this] 
-    (stop-profiler-server this))
-  (run-script [this]
-    (run-profiler-script this))
-  (get-port [this] (.getLocalPort socket))
 
   AsyncCommandRunner
   (set-response [this response] (.offer (:responseQ this) response))
   (get-response [this] (.take (:responseQ this)))
   (set-command [this command] (.offer (:commandQ this) command))
-  (get-command [this] (.take (:commandQ this))))
+  (get-command [this] (.take (:commandQ this)))
+
+  Profiler
+  (start-p [this profiledVM] 
+    (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/basicInfo.js")))
+    (start-profiler-server this)
+    (load-agent this profiledVM))
+  (stop-p [this] 
+    (stop-profiler-server this))
+  (run-command [this command]
+    (do 
+      (clear-logs)
+      (.set-command this command)))
+  (get-result [this waitTime]
+    (add-records))
+  (get-port [this] (.getLocalPort socket)))
+
 
 
 
@@ -105,11 +127,6 @@
     (.bind socket  nil)
     (LocalProfiler. socket (ArrayBlockingQueue. 10) (ArrayBlockingQueue. 10))))
 
-
-(defn clear-logs []
-  (reset! allThreadCommonLog '()))
-
-(defn show-logs [] allThreadCommonLog)
 
 (defn print-stack-trace
   "prints the first element in the common log as a regular stack trace" []
@@ -130,3 +147,7 @@
           (if (.startsWith y "\t")
             (println y))
           (recur (rest x)))))))
+
+(defn get-as-json [] 
+  (cheshire.core/parse-string (add-records)))
+

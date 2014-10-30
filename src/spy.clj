@@ -29,7 +29,12 @@
 (defn json-response [data & [status]]
   {:status (or status 200)
    :headers {"Content-Type" "application/json"}
-   :body (json/generate-string data)})
+   :body  data})
+
+(defn convert-and-json-response [data & [status]]
+  {:status (or status 200)
+   :headers {"Content-Type" "application/json"}
+   :body  (json/generate-string data)})
 
 (defn create-json [few-method-tree visited-nodes]
   (defn extract-relevant-part [x]
@@ -48,19 +53,31 @@
 (defroutes handler 
   (GET "/" [] (redirect "/index.html"))
   (POST "/debug" [action port classNamePattern] 
-        (json-response {"response" (if (= action "start" )
-           (do (spy-command/spy-on 
-                :host "localhost"
-                :port port
-                :classes classNamePattern
-                :exclude (build-exclude-list exclude-classes))
-               (spy-command/start) "started")
-           (do (spy-command/stop) 
-               (set-current-trace (thread-grouped-method-tree (data)))"stopped"))
-         }))
-  (GET "/tree" [] {:status 200 :headers {"Content-Type" "application/json"} :body (create-json (:data @current-trace) #{})})
-  (GET "/vms" [host] (json-response (list-vms host)))
-  (POST "/vms/attach" [host vmId] (json-response (attach-vms host vmId)))
+        (convert-and-json-response
+         {"response" 
+          (if (= action "start" )
+            (do (spy-command/spy-on 
+                 :host "localhost"
+                 :port port
+                 :classes classNamePattern
+                 :exclude (build-exclude-list exclude-classes))
+                (spy-command/start) "started")
+            (do (spy-command/stop) 
+                (set-current-trace 
+                 (thread-grouped-method-tree 
+                  (data)))"stopped"))}))
+  (GET "/tree" [] 
+       (json-response 
+        (create-json (:data @current-trace) #{})))
+  (GET "/vms" [] 
+       (convert-and-json-response (list-vms)))
+  (POST "/vms/attach" [vmId] 
+        (do 
+          (attach-vm vmId) 
+          (json-response vmId)))
+  (POST "/vms/detach" [vmId] (convert-and-json-response (detach-vm vmId)))
+  (POST "/vms/command" [vmId command] (json-response (run-command-on-vm vmId command)))
+  (GET "/vms/response" [vmId] (json-response (get-result-from-vm vmId)))
   (route/resources "/")
 )
 

@@ -42,15 +42,19 @@
 
 (defn detach-vm 
   "detaches the vm with given vmid"
-  [vmId]
+  [^String vmId]
   (if (not (nil? (get @attachedVmManager vmId)))
     (do 
-     (.detach (:vm (ghet @attachedVmManager vmId)))
+     (.detach (:vm (get @attachedVmManager vmId)))
      (.stop-p (:profiler (get @attachedVmManager vmId)))
      (deregister-attached-vm vmId))))
 
 
-(defn run-script-on-vm [vmId scriptName]
-({:jobId 1}))
+(defn run-command-on-vm [vmId command]
+  (.run-command (get-profiler vmId) command))
+
+(defn get-result-from-vm [vmId]
+  (.get-result (get-profiler vmId)))
+
 
 (defn get-profiler [vmId] (:profiler (get @attachedVmManager vmId)))
