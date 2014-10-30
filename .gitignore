@@ -1,4 +1,3 @@
-pom.xml
 *jar
 /lib/
 /classes/
@@ -12,4 +11,4 @@ target
 .lein-repl-history
 *.iml
 .nrepl-port
-sandbox
+sandbox 
