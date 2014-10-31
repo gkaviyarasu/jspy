@@ -36,3 +36,6 @@ Depends on java debug, captures all the method entry and exit events and creates
 
 ## Fun Commands
 curl 'http://localhost:8585/vms'
+curl 'http://localhost:8585/vms/attach' -H 'Accept: application/json' -H 'Referer: http://localhost:8585/index.html' -H 'Content-Type: application/json' --data-binary '{"vmId":"21506"}' --compressed -X POST
+curl 'http://localhost:8585/vms/command' -H 'Accept: application/json' -H 'Referer: http://localhost:8585/index.html' -H 'Content-Type: application/json' --data-binary '{"vmId":"23608", "command":"dumpThreadNames()"}' --compressed -X POST
+curl 'http://localhost:8585/vms/response' -H 'Accept: application/json' -H 'Referer: http://localhost:8585/index.html' -H 'Content-Type: application/json' --data-binary '{"vmId":"23608"}' --compressed -X GET

@@ -14,6 +14,8 @@
 (defn- deregister-attached-vm [vmId]
     (swap! attachedVmManager dissoc vmId))
 
+(defn get-profiler [vmId] (:profiler (get @attachedVmManager vmId)))
+
 (defrecord VM [id mainClass args flags])
 
 (defn list-vms 
@@ -54,7 +56,6 @@
   (.run-command (get-profiler vmId) command))
 
 (defn get-result-from-vm [vmId]
-  (.get-result (get-profiler vmId)))
+  (.get-result (get-profiler vmId) 10))
 
 
-(defn get-profiler [vmId] (:profiler (get @attachedVmManager vmId)))

@@ -1,0 +1,123 @@
+<!DOCTYPE html >
+<html lan="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>J-SPY</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="./lib/bootstrap.2.2.1.min.css" />
+    <link href="./lib/bootstrap-responsive.2.2.1.min.css" rel="stylesheet">
+	<link href="./lib/jumly/styles/jumly.min.css" rel='stylesheet'/>
+	<link href="./lib/jumly/styles/jumly.skin.fancy.css" rel='stylesheet'/>	
+	<link href="./sequence/jumly.overrides.css" rel='stylesheet'/>
+	<link href="./lib/layout/jquery.layout.css" rel='stylesheet'/>
+	<link href="./lib/contextMenu/jquery.contextMenu.css" rel='stylesheet'/>
+	<link href="./css/styles.css" rel='stylesheet'/>
+  </head>
+  <body>
+	<div class="ui-layout-north  top-header">
+		<div class="row">
+			<div class="alert alert-success" id="traceStartMsg" style="display:none">
+				<strong>Success!</strong> Tracing started, press stop to get the trace.
+			</div>
+			<div class="alert alert-success" id="traceEndMsg" style="display:none">
+			  <strong>Success!</strong> Tracing stopped, Code flow console will show the new tree.
+			</div>
+			<div class="alert alert-success" id="selectNodeMsg" style="display:none">
+			  <strong>Info!</strong> Please select a node in the method tree in your lhs with at least one child node.
+			</div>
+		</div>
+		<div>
+			<div class="page-title-container" style="float:left;">
+				<h4>J-SPY</h4>
+			</div>
+			<div id="attachDiv" style="float:right;">
+				<form class="form-inline" role="form">
+					<input type="text" class="form-control" id="port" 
+						   placeholder="Debug Port Number">
+					<input type="text" class="form-control" id="classNamePattern" 
+						   placeholder="com.wm.* like Class Patterns">
+					<button id="attach" type="button" class="btn btn-primary">Start</button>
+					<button id="detach" type="button" class="btn" disabled>Stop</button>
+				</form>
+			</div>
+			<div style="clear:both;"></div>
+		</div>
+	</div>
+	<div class="ui-layout-west">
+		<div id="result-container" class="section">
+			<div class="section-header">
+				<div class="section-content">									
+					<input type="text" id="searchTree" style="margin:0px;width:95%;" 
+						   placeholder="Search by class name">
+				</div>
+			</div>
+            <div class="section-top-nav">
+              <button type="button" class="btn btn-small" id="expandAllBtn" title="Expand all nodes">
+                <span class="icon-plus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-small" id="collapseAllBtn" title="Collapse all nodes">
+                <span class="icon-minus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-small" id="drawSelectedBtn" title="select a node in the tree to plot its sequence diagram">
+                <span class="icon-eye-open"></span>
+              </button>
+
+            </div>
+			<div class="section-body">				
+				<div class="section-content">
+				</div>
+			</div>
+		</div>
+	</div> 
+	<div class="ui-layout-center">
+		<div id="sequence-diagram" class="section fancy">
+			<div class="section-header">
+				<div class="section-content">
+                  <select id="renderer">
+                    <option value="sequenceDia">Sequence Diagram</option>
+                    <option value="callTrace">Call Trace</option>
+                  </select>
+              <button type="button" class="btn btn-small" id="zoomInBtn" title="Zoom In">
+                <span class="icon-plus-sign"></span>
+              </button>
+              <button type="button" class="btn btn-small" id="zoomOutBtn" title="Zoom out">
+                <span class="icon-minus-sign"></span>
+              </button>
+
+				</div>
+			</div>
+			<div class="section-body">				
+				<div class="section-content">
+				</div>
+			</div>
+		</div>
+	</div>
+    <script type="text/javascript" src="./lib/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript" src="./lib/jquery-ui-latest.js"></script>
+    <script type="text/javascript" src="./lib/handlebars-v1.3.0.js"></script>	
+    <script type="text/javascript" src="./lib/mktree.js"></script>
+	<script type="text/javascript" src="./lib/coffee-script-1.7.1.min.js"></script>
+	<script type="text/javascript" src="./lib/jumly/jumly-0.1.5.min.js"></script>
+	<script type="text/javascript" src="./sequence/jspy-sequence-renderer.js"></script>
+	<script type="text/javascript" src="./lib/layout/jquery.layout.min.js"></script>	
+	<script type="text/javascript" src="./lib/contextMenu/jquery.contextMenu.js"></script>
+    <script id="tree-template" type="text/x-handlebars-template">      
+      <ul class='mktree' id='callTree'>
+        {{#recursive children}}
+        <li id="{{id}}" class="liClosed">{{methodName}} {{threadName}}
+          {{#if children}}
+          <ul>
+            {{{recursive children}}}
+          </ul>
+          {{/if}}
+        </li>
+        {{/recursive}}
+      </ul>
+    </script>
+    <script type="text/javascript" src="lib/d3.v3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jspySequenceWithD3.js"></script>
+    <script type="text/javascript" src="./js/jspy.js"></script>
+  </body>
+</html>

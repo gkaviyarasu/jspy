@@ -21,7 +21,7 @@ public class Agent {
 		int port = Integer.parseInt(options);
 
 		Socket socket = new Socket(InetAddress.getLocalHost(), port);
-
+        System.out.println("Now connected to the profiler");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 		OutputStream os = socket.getOutputStream();
 		OutputStreamWriter writer = new OutputStreamWriter(os);
@@ -63,5 +63,6 @@ public class Agent {
 				w.flush();
 			}
         }
+        System.out.println("Disconnected from profiler");
     }
 }

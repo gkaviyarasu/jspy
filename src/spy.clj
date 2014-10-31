@@ -76,7 +76,7 @@
           (attach-vm vmId) 
           (json-response vmId)))
   (POST "/vms/detach" [vmId] (convert-and-json-response (detach-vm vmId)))
-  (POST "/vms/command" [vmId command] (json-response (run-command-on-vm vmId command)))
+  (POST "/vms/command" [vmId command] (json-response (str "{ 'response' :" (run-command-on-vm vmId command) "}")))
   (GET "/vms/response" [vmId] (json-response (get-result-from-vm vmId)))
   (route/resources "/")
 )
