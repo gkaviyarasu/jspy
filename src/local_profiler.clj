@@ -1,10 +1,11 @@
 (ns local-profiler
   (:import 
-   [java.net ServerSocket]
-   [java.io File InputStream]
-   [java.util.concurrent ArrayBlockingQueue]))
+   [java.net ServerSocket SocketException]
+   [java.io File InputStream Closeable]
+   [java.util.concurrent ArrayBlockingQueue TimeUnit]))
 
 (def allThreadCommonLog (atom '()))
+(def msgBoundary (atom "\n------------End---------\n"))
 (defn- printA [message]
   (swap! allThreadCommonLog conj message))
 
@@ -12,8 +13,8 @@
   (doto (Thread. ^Runnable f)
     (.start)))
 
-(defn- close-socket [^ServerSocket s]
-  (when-not (.isClosed s)
+(defn- close-socket [^Closeable s]
+  (if-not (nil? s)
     (.close s)))
 
 (defn- write-output [conn profiler]
@@ -33,18 +34,23 @@
 
 (defn- read-input [is profiler]
   (let [buffer (byte-array 4096)]
-    (loop [read (.read is buffer)]
-      (when (> read 0)
-        (do
-          (printA (String. buffer 0 read))
-          (.set-response profiler (String. buffer 0 read)))
-          (recur (.read is buffer))))))
+    (try 
+      (loop [read (.read is buffer)]
+        (when (> read 0)
+          (do
+            (printA (String. buffer 0 read))
+            (.set-response profiler (String. buffer 0 read)))
+          (recur (.read is buffer))))
+      (catch SocketException e (print "Socket closed from other side, time to go")))))
 
 (defn- accept-connection [socket profiler]
   (on-thread #(
+               (try
                   (let [conn (.accept socket)]
+                    (reset! (:connection profiler) conn)
                     (write-output conn profiler)
-                    (read-input (.getInputStream conn) profiler))))
+                    (read-input (.getInputStream conn) profiler))
+               (catch NullPointerException e (print "something was closed making the other guys null here")))))
   (print "started work to accept connections"))
 
 
@@ -61,13 +67,15 @@
 
 (defn- stop-profiler-server [profiler]
   "stops the profiler server and return the profiler"
-  (close-socket (:socket profiler))
-  profiler)
+  (do
+    (close-socket @(:connection profiler))
+    (close-socket (:socket profiler))
+    profiler))
 
-(defn- run-profiler-script [profiler]
-  "runs the script from a target local folder"
-  (close-socket (:socket profiler))
-  (profiler))
+(defn- combine-all[x] 
+  (if-not (nil? (.peek x)) 
+    (let [y (.poll x)]
+      ( str y (combine-all x)))))
 
 (defn clear-logs []
   (reset! allThreadCommonLog '()))
@@ -82,6 +90,12 @@
        @allThreadCommonLog)))
   ([x] (if-not (nil? x) (str (last x) (add-records (butlast x))) "")))
 
+(defn- get-well-formed-response [response-str]
+  (let [boundary "\n------------End---------\n"]
+    (if (and (.startsWith response-str boundary) 
+             (.endsWith response-str boundary))
+      (subs response-str (.length boundary) (- (.length response-str) (.length boundary)))
+      nil)))
 
 (defprotocol Profiler
   (start-p [this profiledVM])
@@ -96,7 +110,7 @@
   (get-command [this])
   (set-command [this command]))
 
-(defrecord LocalProfiler [socket commandQ responseQ]
+(defrecord LocalProfiler [socket connection commandQ responseQ lastIncompleteResponse]
 
   AsyncCommandRunner
   (set-response [this response] (.offer (:responseQ this) response))
@@ -113,10 +127,19 @@
     (stop-profiler-server this))
   (run-command [this command]
     (do 
-      (clear-logs)
+      (.clear responseQ)
+      (reset! lastIncompleteResponse "")
       (.set-command this command)))
   (get-result [this waitTime]
-    (add-records))
+    (let [resultTillNow (str @lastIncompleteResponse (combine-all responseQ))]
+      (if (nil? (get-well-formed-response resultTillNow))
+        (do
+          (reset! lastIncompleteResponse resultTillNow)
+          nil)
+        
+        (do 
+          (reset! lastIncompleteResponse "")
+          (get-well-formed-response resultTillNow)))))
   (get-port [this] (.getLocalPort socket)))
 
 
@@ -125,7 +148,7 @@
 (defn create-profiler []
   (let [socket (ServerSocket. )]
     (.bind socket  nil)
-    (LocalProfiler. socket (ArrayBlockingQueue. 10) (ArrayBlockingQueue. 10))))
+    (LocalProfiler. socket (atom nil) (ArrayBlockingQueue. 10) (ArrayBlockingQueue. 10) (atom ""))))
 
 
 (defn print-stack-trace
@@ -151,3 +174,5 @@
 (defn get-as-json [] 
   (cheshire.core/parse-string (add-records)))
 
+
+(defn clean-str[command] (clojure.string/replace command "\n" " "))

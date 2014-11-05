@@ -25,18 +25,30 @@
 				<h4>J-SPY</h4>
 			</div>
 			<div id="attachDiv" style="float:right;">
-				<form class="form-inline" role="form">
-					<input type="text" class="form-control" id="port" 
-						   placeholder="Enter Command" tabindex="1" value="eval-buffer">
-					<button id="detach" type="button" class="btn" disabled>Run</button>
-				</form>
+              <span class="attach-notification"></span>
+			  <form class="form-inline" role="form">
+				<input type="text" class="form-control" id="port" 
+					   placeholder="Enter Command" tabindex="1" value="eval-buffer">
+				<button id="detach" type="button" class="btn" disabled>Run</button>
+			  </form>
 			</div>
 			<div style="clear:both;"></div>
 		</div>
 	</div>
 	<div class="ui-layout-west">
 	</div> 
-	<div class="ui-layout-center" contenteditable="true" tabindex="2">
+	<div class="ui-layout-center">
+      <div class="possible-commands" style="display:none" >
+        Commands : 
+        <select id="user-commands">
+          <option value="dumpThreads" selected>Thread Dump</option> 
+          <option value="getClassLocations">Class Locations</option>
+          <option value="dumpThreadNames">Thread Names</option>
+          <option value="runCustomFunction">Run editor function</option>
+          <option value="detachVm">Detach from the currently attached VM</option>
+        </select>
+      </div>
+      <div class="command-display" tabindex="2" contenteditable="true"></div>
 	</div>
     <script type="text/javascript" src="./lib/jquery-1.9.1.min.js"></script>
 	<script type="text/javascript" src="./lib/jquery-ui-latest.js"></script>

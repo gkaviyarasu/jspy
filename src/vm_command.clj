@@ -49,13 +49,18 @@
     (do 
      (.detach (:vm (get @attachedVmManager vmId)))
      (.stop-p (:profiler (get @attachedVmManager vmId)))
-     (deregister-attached-vm vmId))))
+     (deregister-attached-vm vmId)
+     vmId)))
 
 
-(defn run-command-on-vm [vmId command]
+(defn run-command-on-vm [^String vmId ^String command]
   (.run-command (get-profiler vmId) command))
 
-(defn get-result-from-vm [vmId]
-  (.get-result (get-profiler vmId) 10))
+(defn get-result-from-vm [^String vmId]
+  (if-not (nil? (get-profiler vmId))
+    (.get-result (get-profiler vmId) 10)
+    (str "{\"response\":\"No profiler attached for the given vmId\"}")))
 
 
+(defn profilers[]
+  (print attachedVmManager))

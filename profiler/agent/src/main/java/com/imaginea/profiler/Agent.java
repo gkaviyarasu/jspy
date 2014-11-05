@@ -17,19 +17,26 @@ import javax.script.ScriptException;
 
 public class Agent {
 
-	public static void agentmain(String options) throws Exception {
-		int port = Integer.parseInt(options);
+    private static final String MAGIC_STRING = "\n------------End---------\n";
 
-		Socket socket = new Socket(InetAddress.getLocalHost(), port);
-        System.out.println("Now connected to the profiler");
-		BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-		OutputStream os = socket.getOutputStream();
-		OutputStreamWriter writer = new OutputStreamWriter(os);
-        PrintStream errStream = new PrintStream(os, true);
+	public static void agentmain(String options) {
+        try {
+            int port = Integer.parseInt(options);
+        
+            Socket socket = new Socket(InetAddress.getLocalHost(), port);
+            System.out.println("Now connected to the profiler");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+            OutputStream os = socket.getOutputStream();
+            OutputStreamWriter writer = new OutputStreamWriter(os);
+            PrintStream errStream = new PrintStream(os, true);
 
-        ScriptEngine engine = createEngine();
-        setWriters(engine, writer);
-        interactInLoop(engine, writer, reader, errStream);
+            ScriptEngine engine = createEngine();
+            setWriters(engine, writer);
+            interactInLoop(engine, writer, reader, errStream, MAGIC_STRING);
+        }catch(Exception exc) {
+            exc.printStackTrace();
+            throw new RuntimeException(exc);
+        }
 	}
 
     private static ScriptEngine createEngine() throws ScriptException {
@@ -44,25 +51,34 @@ public class Agent {
 		context.setErrorWriter(w);
     }
 
-    private static void interactInLoop(ScriptEngine engine, OutputStreamWriter w, BufferedReader reader, PrintStream errStream) throws IOException {
+    private static void interactInLoop(ScriptEngine engine, OutputStreamWriter w, BufferedReader reader, PrintStream errStream, String boundary) throws IOException {
 		String expr;
+        System.out.println("Attached to profiler");
 		while ((expr = reader.readLine()) != null) {
 			try {
-				Object obj = engine.eval(expr);
+                if ("bye".equalsIgnoreCase(expr)) {
+                    break;
+                } else {
+                    Object obj = engine.eval(expr);
 
-				if (obj == null) {
-					w.flush();
-					continue;
-				}
-				String result = obj.toString();
-				w.write(result);
-				w.write(10);
+                    if (obj == null) {
+                        w.flush();
+                        continue;
+                    }
+                    String result = boundary + obj.toString() + boundary;
+                    w.write(result);
+                    w.flush();
+                }
 			} catch (ScriptException e) {
 				e.printStackTrace(errStream);
-			} finally {
+                e.printStackTrace();
+			} catch(Exception e) {
+                e.printStackTrace();
+            }finally {
 				w.flush();
 			}
         }
+        w.close();
         System.out.println("Disconnected from profiler");
     }
 }
