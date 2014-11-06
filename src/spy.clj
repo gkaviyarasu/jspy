@@ -71,6 +71,11 @@
         (create-json (:data @current-trace) #{})))
   (GET "/vms" [] 
        (convert-and-json-response (list-vms)))
+  (GET "/vms/attached" [] 
+       (convert-and-json-response (let [vms (list-profiled-vms)]
+                                    (if (nil? vms)
+                                      '()
+                                      vms))))
   (POST "/vms/attach" [vmId] 
         (do 
           (attach-vm vmId) 

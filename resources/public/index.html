@@ -25,12 +25,10 @@
 				<h4>J-SPY</h4>
 			</div>
 			<div id="attachDiv" style="float:right;">
-              <span class="attach-notification"></span>
-			  <form class="form-inline" role="form">
-				<input type="text" class="form-control" id="port" 
-					   placeholder="Enter Command" tabindex="1" value="eval-buffer">
-				<button id="detach" type="button" class="btn" disabled>Run</button>
-			  </form>
+              Attached to : 
+              <select id="attached-vms"> 
+                <option value="none">None</option>
+              </select>
 			</div>
 			<div style="clear:both;"></div>
 		</div>
@@ -41,7 +39,8 @@
       <div class="possible-commands" style="display:none" >
         Commands : 
         <select id="user-commands">
-          <option value="dumpThreads" selected>Thread Dump</option> 
+          <option value="none" selected>None</option> 
+          <option value="dumpThreads">Thread Dump</option> 
           <option value="getClassLocations">Class Locations</option>
           <option value="dumpThreadNames">Thread Names</option>
           <option value="runCustomFunction">Run editor function</option>

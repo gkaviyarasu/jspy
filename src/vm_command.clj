@@ -61,6 +61,10 @@
     (.get-result (get-profiler vmId) 10)
     (str "{\"response\":\"No profiler attached for the given vmId\"}")))
 
+(defn list-profiled-vms
+  "Gets a list of vms which are currently being profiled"
+  []
+  (keys @attachedVmManager))
 
 (defn profilers[]
   (print attachedVmManager))

@@ -2,6 +2,9 @@
 $(function() {	
     var retryCounter = 0;
     var selectedVmId = null;
+    var lastRanCommand = "";
+    var lastSelectedVmId = null;
+    var currentlyAttaching = false;
 
 	var pageLayout = $('body').layout({
 		resizeWhileDragging	: true,
@@ -56,6 +59,22 @@ $(function() {
 
     }
 
+    function showProfiledVms() {
+        jsonDataSource("/vms/attached").then(
+            function(data){
+                var selector = $("#attached-vms");
+                if (data) {
+                    selector.find("option:not(:first)").remove()
+                    data.forEach(function(vmId) {
+                        selector.find("option:first").after("<option value='"+vmId+"'>"+vmId+"</option>")
+                    });
+                }
+                // we can not select an option in the same function where the option is added.
+                setTimeout(function(){selector.val(selectedVmId);}, 300);
+            });
+    }
+
+
     window.jsonDataSource = jsonDataSource;
     window.render = render;
     window.renderers = {};
@@ -68,21 +87,36 @@ $(function() {
 
     function attachToVM(vmId) {
         var vmId = '' + vmId;
-        jsonPost("/vms/attach", {'vmId':vmId}).then(function(data){
-            selectedVmId = vmId;
-            showHelp("Attached to vm "+vmId+", select one of the commands from drop down");
-            $(".attach-notification").html("Attached to "+vmId);
-            showPossibleCommands();
-            setTimeout(function(){
-                runInteractiveCommandOnVm(vmId, "dumpThreads()", "Threads running in the attached vm");
-                }, 200);
-        });
+        if (currentlyAttaching === false) {
+            jsonPost("/vms/attach", {'vmId':vmId}).then(
+                function(data){
+                    currentlyAttaching = false;
+                    selectedVmId = vmId;
+                    showHelp("Attached to vm "+vmId+", select one of the commands from drop down");
+                    showProfiledVms(vmId);
+                    showPossibleCommands();
+                    setTimeout(function(){
+                        runInteractiveCommandOnVm(vmId, "dumpThreads()", "Threads running in the attached vm");
+                        setUserCommand('dumpThreads');
+                    }, 200);
+                }, function() {
+                    currentlyAttaching = false;
+                    showHelp("Failed to attach to "+vmId + ", most probably the vm is not active anymore, please refresh the vm list and try again");
+                });
+        } else {
+            showHelp("In the middle of attach to "+vmId);
+        }
     }
 
     function detachFromVM() {
-        jsonPost("/vms/detach", {'vmId':selectedVmId}).then(function(data){showHelp("Detached from the VM")});
-        $('.possible-commands').hide();
-        $(".attach-notification").html("");
+        jsonPost("/vms/detach", {'vmId':selectedVmId}).then(
+            function(data){
+                showHelp("Detached from the VM");
+                $('.possible-commands').hide();
+                selectedVmId = null;
+                showProfiledVms();
+                setUserCommand();
+            });
     }
 
     function retryingPost(url, postData, httpVerb, retry, promiseHolder) {
@@ -114,7 +148,7 @@ $(function() {
 
     function jsonPost(url, postData, httpVerb, retry) {
         var promise = new Promise(function(fulfill, reject) {
-            retryCount = 0;
+            retryCounter = 0;
             retryingPost(url, postData, httpVerb, retry, {"fulfill":fulfill, "reject":reject});
         });
         return promise;
@@ -133,20 +167,38 @@ $(function() {
 
     function showPossibleCommands() {
         $('.possible-commands').show();
-        $('#user-commands').on('change', runSelectedCommand);
     }
 
     function runSelectedCommand(event) {
         var commandToRun = $(event.target).val();
-        if (commandToRun === 'detachVm') {
-            detachFromVM();
-        }else{
-            if (commandToRun === 'runCustomFunction') {
-                commandToRun = $(".command-display").text();
+        if ((commandToRun !== lastRanCommand) && (commandToRun !== 'none')) {
+            if (commandToRun === 'detachVm') {
+                detachFromVM();
+            } else {
+                if (commandToRun === 'runCustomFunction') {
+                    commandToRun = $(".command-display").text();
+                }
+                runInteractiveCommandOnVm(selectedVmId, commandToRun +"()", "Output of selected Command");
             }
-            runInteractiveCommandOnVm(selectedVmId, commandToRun +"()", "Output of selected Command");
+        }
+        lastRanCommand = commandToRun;
+    }
+
+    function switchToAttachedVM() {
+        var selectedVM = $(event.target).val();
+        if (selectedVM != lastSelectedVmId) {
+            selectedVmId = selectedVM;
+            showPossibleCommands();
+            setUserCommand();
         }
     }
+
+    function setUserCommand(optionVal) {
+        $('#user-commands').val(optionVal || 'none');
+    }
+
+    $('#attached-vms').on('change', switchToAttachedVM);
+    $('#user-commands').on('change', runSelectedCommand);
 
 
     render("body > .ui-layout-west", "/vms").using(renderers.jsonViewRenderer).on('click', function(event) {
@@ -164,7 +216,8 @@ $(function() {
         }
     }).showHelp("Please select the id of the vm you would like to attach to");
 
-    
+    showProfiledVms();
+
     window.jsonPost = jsonPost;
     window.runInteractiveCommandOnVm = runInteractiveCommandOnVm;
 
