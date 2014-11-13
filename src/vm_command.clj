@@ -66,5 +66,7 @@
   []
   (keys @attachedVmManager))
 
-(defn profilers[]
-  (print attachedVmManager))
+(defn profilers
+  "utility method to get the profiled vms in shell"
+  []
+  attachedVmManager)

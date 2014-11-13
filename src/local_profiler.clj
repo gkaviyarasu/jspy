@@ -14,8 +14,10 @@
     (.start)))
 
 (defn- close-socket [^Closeable s]
-  (if-not (nil? s)
-    (.close s)))
+  (try 
+    (if-not (nil? s)
+      (.close s))
+    (catch Exception e (.stackTrace e))))
 
 (defn- write-output [conn profiler]
   (do 
@@ -68,6 +70,7 @@
 (defn- stop-profiler-server [profiler]
   "stops the profiler server and return the profiler"
   (do
+    (.set-command profiler "bye")
     (close-socket @(:connection profiler))
     (close-socket (:socket profiler))
     profiler))
@@ -88,7 +91,10 @@
       (filter 
        (fn[y](not (.startsWith y "writing to stream"))) 
        @allThreadCommonLog)))
-  ([x] (if-not (nil? x) (str (last x) (add-records (butlast x))) "")))
+  ([x] 
+     (if-not (nil? x) 
+       (str (last x) 
+            (add-records (butlast x))) "")))
 
 (defn- get-well-formed-response [response-str]
   (let [boundary "\n------------End---------\n"]

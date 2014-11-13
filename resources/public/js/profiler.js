@@ -5,6 +5,7 @@ $(function() {
     var lastRanCommand = "";
     var lastSelectedVmId = null;
     var currentlyAttaching = false;
+    var globalEventHandlers = {};
 
 	var pageLayout = $('body').layout({
 		resizeWhileDragging	: true,
@@ -20,7 +21,9 @@ $(function() {
 	});
 
     function jsonDataSource(url) {
-        return Promise.resolve($.ajax(url));
+        var promise = Promise.resolve($.ajax(url));
+        promise.toString = function(){return url;}
+        return promise;
     }
 
     function showHelp(message) {
@@ -38,11 +41,11 @@ $(function() {
             dataSource = what;
         }
 
-       
         returnVal = {
             using: function(renderer) {
                 dataSource.then(function(data) {
                     renderer.call(this, where, data);
+                    window.dispatchEvent(new CustomEvent('rendered', {'detail': dataSource} ));
                 });
                 return returnVal;
             },
@@ -154,7 +157,8 @@ $(function() {
         return promise;
     }
 
-    function runInteractiveCommandOnVm(vmId, command, reultHelp) {
+    function runInteractiveCommandOnVm(vmId, command, resultHelp) {
+        showHelp("Getting data for "+resultHelp)
         jsonPost("/vms/command", 
                      {'vmId':vmId, 'command':command}
                 ).then(function(data){
@@ -174,7 +178,13 @@ $(function() {
         if ((commandToRun !== lastRanCommand) && (commandToRun !== 'none')) {
             if (commandToRun === 'detachVm') {
                 detachFromVM();
-            } else {
+            } else if (commandToRun === 'startProfiling') {
+                if (startProfiling() === false) {
+                    return;
+                }
+            } else if (commandToRun === 'stopProfiling') {
+                stopProfiling();
+            }else {
                 if (commandToRun === 'runCustomFunction') {
                     commandToRun = $(".command-display").text();
                 }
@@ -216,7 +226,25 @@ $(function() {
         }
     }).showHelp("Please select the id of the vm you would like to attach to");
 
+    function startProfiling() {
+        var classLocations = [];
+        $(".ui-layout-center .level1 li input:checkbox:checked").each(function(){classLocations.push($(this).next('span').text().replace(/"/g,''));});
+        if (classLocations.length > 0) {
+            console.log(classLocations);
+            return true;
+        } else {
+            showHelp("Select class locations and then start profiling");
+            return false;
+        }
+    }
+
+    function stopProfiling() {
+    }
+
     showProfiledVms();
+    window.addEventListener('rendered', function(event){
+        $(".ui-layout-center .level1 li span").before(function(){return "<input type='checkbox' class='node-selector'></input>";});
+    });
 
     window.jsonPost = jsonPost;
     window.runInteractiveCommandOnVm = runInteractiveCommandOnVm;
