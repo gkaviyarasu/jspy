@@ -31,12 +31,14 @@
   (mapcat (fn[fileLocation] (accumulate-classes fileLocation '())) fileLocations))
 
 (defn- instrument-class-stream [fileStream indexWriter classFileWriter]
-  (let [instrumentedBytes (instrument-class (.getName file) )
-        byteSize (alength instrumentedBytes)]
-    (.write indexWriter (str (.getName file) " " @curr-pos " " (increment-position byteSize) "\n"))
+  (let [instrumentedClass (instrument-class fileStream)
+        instrumentedBytes (:bytes instrumentedClass)
+        bytesLength (alength instrumentedBytes)
+        clazzName (:name instrumentedClass)]
+    (.write indexWriter (str  clazzName " " @curr-pos " " (increment-position bytesLength) "\n"))
     (.write classFileWriter instrumentedBytes)
     (.flush classFileWriter)
-    file))
+    clazzName))
 
 (defn- entries [jarFile]
   (enumeration-seq (.entries jarFile)))
@@ -44,8 +46,9 @@
 (defn- instrument-jar [file indexWriter classFileWriter]
   (with-open [jarFile (java.util.jar.JarFile. file)]
     (doseq [jarEntry (enumeration-seq (.entries jarFile))]
-      (with-open [jarStream (.getInputStream jarFile jarEntry)]
-        (instrument-class-stream jarStream indexWriter classFileWriter))))
+      (if (.endsWith (.getName jarEntry) ".class")
+        (with-open [jarStream (.getInputStream jarFile jarEntry)]
+          (instrument-class-stream jarStream indexWriter classFileWriter))))))
 
 
 (defn instrument-classes [files]
@@ -64,5 +67,22 @@
       (.deleteOnExit classFile)
       (conj '() (.getAbsolutePath indexFile) (.getAbsolutePath classFile)))))
 
+
+(defn toInt[x] (Integer/parseInt x 16))
+
+(defn toHex[x] (Integer/toHexString x))
+
+(defn profile-vm 
+  ;; handy method to try out profiling
+  ([regex fileName]
+     (profile-vm regex fileName (first (keys @(profilers)))))
+  ([regex fileName vmId]
+     (let 
+         [instrumentedFiles (instrument-classes (find-classes (conj '() fileName)))
+       profiler (get-profiler vmId)]
+       (.set-command profiler (str "profile-classes " regex " " (second instrumentedFiles) " " (first instrumentedFiles))))))
+
 (comment
-  (find-classes (conj '() (str (System/getProperty "user.dir") "/profiler/agent/target/"))))
+  (find-classes (conj '() (str (System/getProperty "user.dir") "/profiler/agent/target/")))
+  (profile-vm "32477" "org/eclipse/jetty/server/.*" "/home/apurba/.m2/repository/org/eclipse/jetty/jetty-server/7.6.8.v20121106/jetty-server-7.6.8.v20121106.jar"))
+

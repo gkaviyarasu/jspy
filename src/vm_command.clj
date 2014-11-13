@@ -1,6 +1,7 @@
 ;; vm-commmands used for attach, detach things apart from profiler work
 (ns vm-command
-  (:use [local-profiler])
+  (:use [local-profiler] 
+        [profiler-util])
   (:import 
    [sun.tools.jps Arguments Jps]
    [sun.jvmstat.monitor HostIdentifier MonitoredHost VmIdentifier MonitoredVmUtil]

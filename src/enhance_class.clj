@@ -1,7 +1,10 @@
 (ns enhance-class
   (import [clojure.asm ClassReader ClassVisitor ClassWriter Opcodes MethodVisitor]))
 
+(defrecord InstrumentedClass [name bytes])
+
 (def curr-class-name (atom ""))
+(def curr-in-clinit (atom false))
 
 (defn- add-entry-exit-code [stage writer class-name method-name]
   (do 
@@ -16,8 +19,8 @@
     (visitInsn [this inst]
       (do 
         (if (or (= inst Opcodes/ARETURN) (= inst Opcodes/DRETURN) (= inst  Opcodes/FRETURN) (= inst  Opcodes/IRETURN) (= inst  Opcodes/LRETURN) (= inst  Opcodes/RETURN) (= inst Opcodes/ATHROW)) 
-          (add-entry-exit-code "end" this class-name method-name))
-        (.visitInsn delegate inst)))
+          (add-entry-exit-code "end" this class-name method-name)))
+      (.visitInsn delegate inst))
     (visitCode [this]
       (do 
         (add-entry-exit-code "start" this class-name method-name)
@@ -86,18 +89,22 @@
     (visitInnerClass [this x y z a]
       (.visitInnerClass delegate x y z a))
     (visitMethod [this access method-name desc singature exceptions] 
-      (create-perf-adding-method-visitor (.visitMethod delegate access method-name desc singature exceptions) @curr-class-name method-name))
+      (let [delegateMethodVisitor (.visitMethod delegate access method-name desc singature exceptions)]
+        (if-not 
+           (.equals method-name "<clinit>")
+          (create-perf-adding-method-visitor delegateMethodVisitor @curr-class-name method-name)
+          delegateMethodVisitor)))
     (visitOuterClass [this x y z]
       (.visitOuterClass delegate x y z))
     (visitSource [this x y]
       (.visitSource delegate x y))))
 
 (defn instrument-class [fileStream]
-  (let [cw (ClassWriter. ClassWriter/COMPUTE_FRAMES)
+  (let [cw (ClassWriter. ClassWriter/COMPUTE_MAXS)
         cr (ClassReader.  fileStream)]
     (do
       (.accept cr (create-perf-adding-class-visitor cw) 0)
-      (.toByteArray cw))))
+      (InstrumentedClass. @curr-class-name (.toByteArray cw)))))
 
 
 (defn write-file [bytes fileName ]
@@ -107,4 +114,10 @@
 
 
 (comment
-  (write-file (instrument-class (clojure.java.io/input-stream "/data/work/ss-git/java/jspy/profiler/agent/target/test-classes/com/imaginea/profiler/TestJournal.class")) "/tmp/xyz.class"))
+  (write-file 
+   (:bytes 
+    (instrument-class 
+     (clojure.java.io/input-stream 
+      (str (System/getProperty "user.dir") 
+           "/profiler/agent/target/test-classes/org/apurba/profiler/TestJournal.class")))) 
+   "/tmp/xyz.class"))

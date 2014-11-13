@@ -46,7 +46,8 @@
 				<configuration>
 					<archive>
 						<manifestEntries>
-							<Agent-Class>com.imaginea.profiler.Agent</Agent-Class>
+							<Agent-Class>org.apurba.profiler.Agent</Agent-Class>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
 						</manifestEntries>
 					</archive>
 				</configuration>

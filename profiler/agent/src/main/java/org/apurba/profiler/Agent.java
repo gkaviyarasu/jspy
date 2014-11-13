@@ -9,27 +9,27 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.Queue;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.security.ProtectionDomain;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import sun.nio.ch.DirectBuffer;
-import java.lang.instrument.UnmodifiableClassException;
 
 public class Agent {
 
@@ -39,7 +39,7 @@ public class Agent {
 
 	private static final String STOP_PROFILING_CMD = "stop-profiling";
 
-    private static final String GET_ALL_ENTRIES = "get-all-entries";
+	private static final String GET_ALL_ENTRIES = "get-all-entries";
 
 	private static final Agent INSTANCE = new Agent();
 
@@ -51,13 +51,13 @@ public class Agent {
 
 	private Journal classJournal;
 
-    private Queue<String[]> entryQueue = new ConcurrentLinkedQueue<>();
+	private Queue<String[]> entryQueue = new ConcurrentLinkedQueue<>();
 
-    private volatile boolean shouldProfile = false;
+	private volatile boolean shouldProfile = false;
 
-    public static Agent getInstance() {
-        return INSTANCE;
-    }
+	public static Agent getInstance() {
+		return INSTANCE;
+	}
 
 	public static void agentmain(String options, Instrumentation inst) {
 		try {
@@ -70,11 +70,11 @@ public class Agent {
 		}
 	}
 
-    public void publish(String... args) {
-        if (shouldProfile) {
-            entryQueue.add(args);
-        }
-    }
+	public void publish(String... args) {
+		if (shouldProfile) {
+			entryQueue.add(args);
+		}
+	}
 
 	private Agent() {
 	}
@@ -110,15 +110,15 @@ public class Agent {
 		System.out.println("Attached to profiler");
 		while ((expr = reader.readLine()) != null) {
 			try {
-				if ("bye".equalsIgnoreCase(expr)) {
+				if (expr.startsWith("bye")) {
 					break;
 				} else if (expr.startsWith(PROFILE_CLASSES_CMD)) {
 					profileClasses(expr);
-				} else if (STOP_PROFILING_CMD.equals(expr)) {
+				} else if (expr.startsWith(STOP_PROFILING_CMD)) {
 					stopProfiling();
-				} else if (GET_ALL_ENTRIES.equals(expr)) {
-                    writeAllEntries(w);
-                }else {
+				} else if (expr.startsWith(GET_ALL_ENTRIES)) {
+					writeAllEntries(w);
+				} else {
 					Object obj = engine.eval(expr);
 
 					if (obj == null) {
@@ -144,21 +144,21 @@ public class Agent {
 	}
 
 	private void profileClasses(String cmd) throws IOException {
-        shouldProfile = true;
+		shouldProfile = true;
 		String[] args = cmd.substring(PROFILE_CLASSES_CMD.length()).split(" ");
-		if (args.length != 3) {
+		if (args.length == 4) {
 			// profile classes as first arg, index file name as second param and enhanced content as third param
-			classJournal = new Journal(args[1], args[2]);
-			transformer = new OndemandTransformer(args[0], classJournal);
-            inst.addTransformer(transformer);
-            transformer.retransformExistingClasses();
+			classJournal = new Journal(args[2], args[3]);
+			transformer = new OndemandTransformer(args[1], classJournal);
+			inst.addTransformer(transformer, true);
+			transformer.retransformExistingClasses();
 		} else {
 			throw new RuntimeException("Did not understand the passed profiling cmd " + cmd);
 		}
 	}
 
 	private void stopProfiling() throws IOException {
-        shouldProfile = false;
+		shouldProfile = false;
 		if (transformer != null) {
 			inst.removeTransformer(transformer);
 		}
@@ -167,18 +167,18 @@ public class Agent {
 		}
 	}
 
-    private void writeAllEntries(OutputStreamWriter writer) throws Exception {
-        Object[] entries = entryQueue.toArray();
-        for(Object entry:entries) {
-            String[] currEntries = (String[])entry;
-            for (String currEntry: currEntries) {
-                writer.write(currEntry);
-                writer.write(" ");
-            }
-            writer.write("\n");
-        }
-        writer.flush();
-    }
+	private void writeAllEntries(OutputStreamWriter writer) throws Exception {
+		Object[] entries = entryQueue.toArray();
+		for (Object entry : entries) {
+			String[] currEntries = (String[]) entry;
+			for (String currEntry : currEntries) {
+				writer.write(currEntry);
+				writer.write(" ");
+			}
+			writer.write("\n");
+		}
+		writer.flush();
+	}
 
 	private class OndemandTransformer implements ClassFileTransformer {
 		private Pattern classPattern;
@@ -195,50 +195,57 @@ public class Agent {
 		}
 
 		private byte[] getBytes(String className) {
+			System.out.println("would have instrumented " + className);
 			if (shouldInstrument(className)) {
-				return getInstrumentedVersion(className);
+				byte[] transformedBytes = getInstrumentedVersion(className);
+				System.out.println("did instrument " + className);
+				return transformedBytes;
 			} else {
 				return null;
 			}
 		}
 
 		private boolean shouldInstrument(String className) {
-            try{
-                return classPattern.matcher(className).matches();
-            }catch(Exception exc) {
-                // sorry, but this better not fail as everything will collapse
-                exc.printStackTrace();
-                classPattern = Pattern.compile("match-nothing");
-                return false;
-            }
+			try {
+				return classPattern.matcher(className).matches();
+			} catch (Exception exc) {
+				// sorry, but this better not fail as everything will collapse
+				exc.printStackTrace();
+				classPattern = Pattern.compile("match-nothing");
+				return false;
+			}
 		}
 
 		private byte[] getInstrumentedVersion(String className) {
 			return classJournal.getBytes(className);
 		}
 
-        private void retransformExistingClasses() {
-            //TODO: performance not thought of
-            Class[] classes = inst.getAllLoadedClasses();
-            List<Class> classToTransform = new ArrayList<>();
-            for (Class clazz : classes) {
-                // class loader is null, so it is system class, so don't mess with it
-                if (clazz.getClassLoader() != null && shouldInstrument(clazz.getName())) {
-                    classToTransform.add(clazz);
-                }
-            }
-            Class[] clazzArr = new Class[classToTransform.size()];
-            clazzArr = classToTransform.toArray(clazzArr);
-            // don't want to mess with logging
-            System.out.println("About to instrument "+clazzArr.length);
-            try {
-                inst.retransformClasses(clazzArr);
-            }catch(UnmodifiableClassException exc) {
-                // not calling inst.isModifiableClass, risking it
-                // FIXME : must inform the profiler
-                exc.printStackTrace();
-            }
-        }
+		private void retransformExistingClasses() {
+			// TODO: performance not thought of
+			Class[] classes = inst.getAllLoadedClasses();
+			List<Class> classToTransform = new ArrayList<>();
+			for (Class clazz : classes) {
+				// class loader is null, so it is system class, so don't mess with it
+				if (clazz.getClassLoader() != null && shouldInstrument(clazz.getName().replace('.', '/'))) {
+					classToTransform.add(clazz);
+				}
+			}
+			if (classToTransform.size() > 0) {
+				Class[] clazzArr = new Class[classToTransform.size()];
+				clazzArr = classToTransform.toArray(clazzArr);
+				// don't want to mess with logging
+				System.out.println("About to instrument " + clazzArr.length);
+				try {
+					inst.retransformClasses(clazzArr);
+				} catch (UnmodifiableClassException exc) {
+					// not calling inst.isModifiableClass, risking it
+					// FIXME : must inform the profiler
+					exc.printStackTrace();
+				}
+			} else {
+				System.out.println("Did not instrument even a single class");
+			}
+		}
 	}
 
 	private static class Range {
@@ -273,12 +280,18 @@ public class Agent {
 			dataBuffer = fc.map(MapMode.READ_ONLY, 0, fc.size());
 		}
 
-		private byte[] getBytes(String key) {
+		protected byte[] getBytes(String key) {
 			Range dataRange = index.get(key);
 			if (dataRange != null) {
 				byte[] dst = new byte[dataRange.length()];
-				dataBuffer.get(dst, dataRange.start, dataRange.end);
-				return dst;
+				try {
+					dataBuffer.position(dataRange.start);
+					dataBuffer.get(dst, 0, dataRange.length());
+					return dst;
+				} catch (IndexOutOfBoundsException exc) {
+					exc.printStackTrace();
+					throw new RuntimeException(exc);
+				}
 			} else {
 				return null;
 			}

@@ -182,3 +182,10 @@
 
 
 (defn clean-str[command] (clojure.string/replace command "\n" " "))
+
+
+(comment
+  (.set-command profiler "profile-classes <regex> <indexfile> <classfile>")
+ (.set-command profiler "stop-profiling")
+ (.set-command profiler "get-all-entries")
+)

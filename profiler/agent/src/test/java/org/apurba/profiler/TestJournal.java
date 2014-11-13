@@ -7,8 +7,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import org.junit.Test;
 import org.apurba.profiler.Agent.Journal;
+import org.junit.Test;
 
 public class TestJournal {
 
@@ -18,6 +18,16 @@ public class TestJournal {
 		byte[] data = "sdfasd".getBytes();
 		Journal journal = createJournal(indexData, data);
 		assertTrue(journal.contains("a"));
+	}
+
+	@Test
+	public void testClassValidity() throws Exception {
+		String classDef = this.getClass().getResource("/classdefblob").getPath();
+		String indexFile = this.getClass().getResource("/indexblob").getPath();
+		Journal journal = new Journal(indexFile, classDef);
+		ClassLoader customCL = new ByteClassLoader(Thread.currentThread().getContextClassLoader(), journal);
+		Class<?> customClass = customCL.loadClass("com.eventdb.EventUser");
+		assertNotNull(customClass.getMethods());
 	}
 
 	private File createIndexFileWithData(String[] indexInfo) throws Exception {
@@ -58,5 +68,24 @@ public class TestJournal {
 		String indexFileName = indexFile.getAbsolutePath();
 		String dataFileName = createDataFileWithData(data).getAbsolutePath();
 		return new Journal(indexFileName, dataFileName);
+	}
+
+	private static class ByteClassLoader extends ClassLoader {
+
+		private Journal journal;
+
+		public ByteClassLoader(ClassLoader parent, Journal journal) {
+			super(parent);
+			this.journal = journal;
+		}
+
+		@Override
+		protected Class<?> findClass(final String name) throws ClassNotFoundException {
+			byte[] classBytes = journal.getBytes(name.replace('.', '/'));
+			if (classBytes != null) {
+				return defineClass(name, classBytes, 0, classBytes.length);
+			}
+			return super.findClass(name);
+		}
 	}
 }
