@@ -1,10 +1,11 @@
-(ns enhance-class
+(ns ^{:doc "Byte code magic to add entry exit methods"
+       :author "Apurba Nath"}
+  enhance-class
   (import [clojure.asm ClassReader ClassVisitor ClassWriter Opcodes MethodVisitor]))
 
 (defrecord InstrumentedClass [name bytes])
 
 (def curr-class-name (atom ""))
-(def curr-in-clinit (atom false))
 
 (defn- add-entry-exit-code [stage writer class-name method-name]
   (do 
@@ -18,6 +19,8 @@
   (reify MethodVisitor
     (visitInsn [this inst]
       (do 
+        ;; FIXME use switch this is ugly
+        ;; miss cglib magic, this is stupid code
         (if (or (= inst Opcodes/ARETURN) (= inst Opcodes/DRETURN) (= inst  Opcodes/FRETURN) (= inst  Opcodes/IRETURN) (= inst  Opcodes/LRETURN) (= inst  Opcodes/RETURN) (= inst Opcodes/ATHROW)) 
           (add-entry-exit-code "end" this class-name method-name)))
       (.visitInsn delegate inst))
@@ -71,13 +74,20 @@
       (.visitEnd delegate))
 ))
 
-
+;; visitMethod and visit are the only interesting methods
 (defn create-perf-adding-class-visitor[delegate]
   (reify ClassVisitor 
     (visit [this version access name desc singature exceptions]
       (do 
         (reset! curr-class-name name)
         (.visit delegate  version access name desc singature exceptions)))
+    (visitMethod [this access method-name desc singature exceptions] 
+      (let [delegateMethodVisitor (.visitMethod delegate access method-name desc singature exceptions)]
+        (if-not 
+           (.equals method-name "<clinit>")
+          (create-perf-adding-method-visitor delegateMethodVisitor @curr-class-name method-name)
+          delegateMethodVisitor)))
+    ;; stupid code starts
     (visitAnnotation [this x y]
       (.visitAnnotation delegate x y))
     (visitAttribute [this x]
@@ -88,12 +98,6 @@
       (.visitField delegate x y z a b))
     (visitInnerClass [this x y z a]
       (.visitInnerClass delegate x y z a))
-    (visitMethod [this access method-name desc singature exceptions] 
-      (let [delegateMethodVisitor (.visitMethod delegate access method-name desc singature exceptions)]
-        (if-not 
-           (.equals method-name "<clinit>")
-          (create-perf-adding-method-visitor delegateMethodVisitor @curr-class-name method-name)
-          delegateMethodVisitor)))
     (visitOuterClass [this x y z]
       (.visitOuterClass delegate x y z))
     (visitSource [this x y]
@@ -105,19 +109,3 @@
     (do
       (.accept cr (create-perf-adding-class-visitor cw) 0)
       (InstrumentedClass. @curr-class-name (.toByteArray cw)))))
-
-
-(defn write-file [bytes fileName ]
-   (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. fileName))]
-     (.write w bytes)))
-
-
-
-(comment
-  (write-file 
-   (:bytes 
-    (instrument-class 
-     (clojure.java.io/input-stream 
-      (str (System/getProperty "user.dir") 
-           "/profiler/agent/target/test-classes/org/apurba/profiler/TestJournal.class")))) 
-   "/tmp/xyz.class"))

@@ -1,5 +1,6 @@
 (ns profiler-util
-  (:use [enhance-class])
+  (:use [enhance-class]
+        [class-util])
   (:import
    [java.nio.channels FileChannel]
    [java.nio ByteBuffer]
@@ -50,6 +51,17 @@
         (with-open [jarStream (.getInputStream jarFile jarEntry)]
           (instrument-class-stream jarStream indexWriter classFileWriter))))))
 
+(defn extract-first-string[file-name] 
+  (let [lines (.split (slurp file-name) "\n")]
+    (map (fn[line] (first (.split line " "))) lines)))
+
+(defn create-regex [file]
+  (let [names (extract-first-string file)]
+    (str 
+     (if (> (count names) 1)
+       (extract-common-prefix  names "/")
+       "")
+   ".*")))
 
 (defn instrument-classes [files]
   (let [indexFile (File/createTempFile "index" "blob")
@@ -65,22 +77,10 @@
             (instrument-jar file indexWriter classFileWriter))))
       (.deleteOnExit indexFile)
       (.deleteOnExit classFile)
-      (conj '() (.getAbsolutePath indexFile) (.getAbsolutePath classFile)))))
-
-
-(defn toInt[x] (Integer/parseInt x 16))
-
-(defn toHex[x] (Integer/toHexString x))
-
-(defn profile-vm 
-  ;; handy method to try out profiling
-  ([regex fileName]
-     (profile-vm regex fileName (first (keys @(profilers)))))
-  ([regex fileName vmId]
-     (let 
-         [instrumentedFiles (instrument-classes (find-classes (conj '() fileName)))
-       profiler (get-profiler vmId)]
-       (.set-command profiler (str "profile-classes " regex " " (second instrumentedFiles) " " (first instrumentedFiles))))))
+      {:indexFile (.getAbsolutePath indexFile)
+       :classFile (.getAbsolutePath classFile)
+       :regex (create-regex indexFile)
+       })))
 
 (comment
   (find-classes (conj '() (str (System/getProperty "user.dir") "/profiler/agent/target/")))

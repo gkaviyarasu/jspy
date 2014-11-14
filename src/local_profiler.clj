@@ -1,11 +1,14 @@
-(ns local-profiler
+(ns ^{:doc "VM Profiler has to run on the actual system running java processes"}
+  local-profiler
+  (use [profiler-util])
   (:import 
    [java.net ServerSocket SocketException]
    [java.io File InputStream Closeable]
    [java.util.concurrent ArrayBlockingQueue TimeUnit]))
 
 (def allThreadCommonLog (atom '()))
-(def msgBoundary (atom "\n------------End---------\n"))
+
+;; as *out* for other threads are not bound to out http://stackoverflow.com/questions/15197914/output-is-sent-to-console-instead-of-repl-when-using-threads-in-eclipse-counterc
 (defn- printA [message]
   (swap! allThreadCommonLog conj message))
 
@@ -57,9 +60,10 @@
 
 
 (defn- load-agent [profiler profiledVm]
-      (on-thread #(.loadAgent profiledVm
-                (str (System/getProperty "user.dir") "/profiler/agent/target/custom-agent.jar")
-                (.toString (.get-port profiler)))))
+      (on-thread #(.loadAgent 
+                   profiledVm
+                   (str (System/getProperty "user.dir") "/profiler/agent/target/custom-agent.jar")
+                   (.toString (.get-port profiler)))))
 
 (defn- start-profiler-server [profiler]
   "starts the profiler server and return the profiler"
@@ -108,7 +112,8 @@
   (stop-p [this])
   (run-command [this command])
   (get-result [this waitTime])
-  (get-port [this]))
+  (get-port [this])
+  (profile-locations [this locations]))
 
 (defprotocol AsyncCommandRunner
   (set-response [this response])
@@ -131,6 +136,20 @@
     (load-agent this profiledVM))
   (stop-p [this] 
     (stop-profiler-server this))
+  (profile-locations [this locations]
+    (let [to-instrument (instrument-classes (find-classes locations))
+          class-regex (:regex to-instrument)
+          index-file (:indexFile to-instrument)
+          class-file (:classFile to-instrument)
+          ]
+      (do
+        (println locations class-regex index-file class-file)
+        (.set-command this 
+                      (str 
+                       "profile-classes " 
+                        class-regex " "
+                        index-file " "
+                        class-file " ")))))
   (run-command [this command]
     (do 
       (.clear responseQ)
@@ -149,42 +168,13 @@
   (get-port [this] (.getLocalPort socket)))
 
 
-
-
 (defn create-profiler []
   (let [socket (ServerSocket. )]
     (.bind socket  nil)
     (LocalProfiler. socket (atom nil) (ArrayBlockingQueue. 10) (ArrayBlockingQueue. 10) (atom ""))))
 
-
-(defn print-stack-trace
-  "prints the first element in the common log as a regular stack trace" []
-  (apply println 
-         (map 
-          #(str % "\n") 
-          (cheshire.core/parse-string 
-           (first @allThreadCommonLog)))))
-
-
-(defn print-exception 
-  "Prints the exception stack trace"
-  []
-  (loop [x @allThreadCommonLog]
-    (let [y (first x)]
-      (if-not (nil? y)
-        (do 
-          (if (.startsWith y "\t")
-            (println y))
-          (recur (rest x)))))))
-
-(defn get-as-json [] 
-  (cheshire.core/parse-string (add-records)))
-
-
-(defn clean-str[command] (clojure.string/replace command "\n" " "))
-
-
 (comment
+  regex is java regex like "org/eclipse/jetty/.*"
   (.set-command profiler "profile-classes <regex> <indexfile> <classfile>")
  (.set-command profiler "stop-profiling")
  (.set-command profiler "get-all-entries")
