@@ -1,8 +1,8 @@
-(ns ^{:doc "Repl utilities"
-       :author "Apurba Nath"}
+(ns ^{:doc "Repl utilities"}
   repl-utils
   (use [enhance-class]
-       []))
+       [local-profiler]
+       [vm-command]))
 
 (defn write-file [bytes fileName ]
    (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. fileName))]
@@ -29,25 +29,12 @@
             (println y))
           (recur (rest x)))))))
 
-(defn get-as-json [] 
-  (cheshire.core/parse-string (add-records)))
-
 (defn clean-str[command] (clojure.string/replace command "\n" " "))
 
 
 (defn toInt[x] (Integer/parseInt x 16))
 
 (defn toHex[x] (Integer/toHexString x))
-
-(defn profile-vm 
-  ;; handy method to try out profiling
-  ([regex fileName]
-     (profile-vm regex fileName (first (keys @(profilers)))))
-  ([regex fileName vmId]
-     (let 
-         [instrumentedFiles (instrument-classes (find-classes (conj '() fileName)))
-       profiler (get-profiler vmId)]
-       (.set-command profiler (str "profile-classes " regex " " (second instrumentedFiles) " " (first instrumentedFiles))))))
 
 
 (comment

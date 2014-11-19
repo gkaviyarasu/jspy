@@ -1,4 +1,20 @@
 importPackage(java.lang.reflect);
+importPackage(java.lang.management);
+
+var _ = {};
+_['toArray'] = function(col) { return (col['toArray'])? col.toArray():col };
+_['find'] = function(arr, fn){
+    var i = 0; 
+    for (; i < arr.length; i++){
+        if (fn.call(this, arr[i])) {
+            return arr[i];
+        }
+    }
+    return null;
+};
+
+_['toJson'] = function(x) {return JSON.stringify(x);};
+
 
 function dumpThread(name) {
     var sFrames = [];
@@ -31,13 +47,11 @@ function getClassLoaders() {
 }
 
 function dumpThreadNames(){ 
-    var tNames = []; 
-    threads = Thread.getAllStackTraces().keySet(); 
-    it = threads.iterator(); 
-    while(it.hasNext()) { 
-        t = it.next(); 
-        tNames.push('' + t.getName())
-    }
+    var tNames = _.each(
+        _.toArray(Thread.getAllStackTraces().keySet()), 
+        function(t) {
+            return '' + t.getName()
+        });
     return JSON.stringify(tNames);
 }
 
@@ -96,14 +110,17 @@ function dumpThreads() {
     return JSON.stringify(allFrames);
 }
 
-
-function toStr(arlr) { 
-    var strArr = []; 
+function forEach(arr, fn) { 
+    var results= [];   
     var i = 0; 
     for (; i < arr.length; i++){ 
-        strArr.push(arr[i].toString())
+        results.push(fn.call(this,arr[i]));
     } 
-    return strArr;
+    return results;
+}
+
+function toStr(arr) { 
+    return forEach(arr, function(el) {return el.toString()});
 } 
 
 function getMethod(clsName, methodName) {
@@ -123,3 +140,6 @@ function invokeVoidViaReflection(obj, clsName, methodName) {
     m.setAccessible(true);
     return m.invoke(obj, null);
 }
+
+
+_['each'] = forEach;

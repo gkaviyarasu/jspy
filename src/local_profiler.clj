@@ -1,4 +1,4 @@
-(ns ^{:doc "VM Profiler has to run on the actual system running java processes"}
+(ns ^{:doc "Local Profiler, runs on the same machine as the actual profiled VM"}
   local-profiler
   (use [profiler-util])
   (:import 
@@ -132,6 +132,7 @@
   Profiler
   (start-p [this profiledVM] 
     (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/basicInfo.js")))
+    (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/jmxInfo.js")))
     (start-profiler-server this)
     (load-agent this profiledVM))
   (stop-p [this] 

@@ -55,6 +55,9 @@ public class Agent {
 
 	private volatile boolean shouldProfile = false;
 
+    // captures the last time the profiler pulled profiling information from this vm
+    private long lastPullTime = 0L;
+
 	public static Agent getInstance() {
 		return INSTANCE;
 	}
@@ -70,11 +73,17 @@ public class Agent {
 		}
 	}
 
-	public void publish(String... args) {
-		if (shouldProfile) {
-			entryQueue.add(args);
+	public void publish(String eventName, String className, String methodName) {
+        // don't want to capture information unless people are listening, so don't capture information unless someone has listened in the last 40 seconds
+        long currentTime = System.currentTimeMillis();
+        if (shouldProfile && ((currentTime - lastPullTime) < 40000 )) {
+            publishInteral(String.valueOf(Thread.currentThread().getId()), String.valueOf(currentTime), eventName, className, methodName);
 		}
 	}
+
+    private void publishInteral(String... args) {
+        entryQueue.add(args);
+    }
 
 	private Agent() {
 	}
@@ -117,7 +126,9 @@ public class Agent {
 				} else if (expr.startsWith(STOP_PROFILING_CMD)) {
 					stopProfiling();
 				} else if (expr.startsWith(GET_ALL_ENTRIES)) {
+                    w.write(boundary);
 					writeAllEntries(w);
+                    w.write(boundary);
 				} else {
 					Object obj = engine.eval(expr);
 
@@ -125,8 +136,9 @@ public class Agent {
 						w.flush();
 						continue;
 					}
-					String result = boundary + obj.toString() + boundary;
-					w.write(result);
+                    w.write(boundary);
+					w.write(obj.toString());
+                    w.write(boundary);
 					w.flush();
 				}
 			} catch (ScriptException e) {
@@ -168,6 +180,8 @@ public class Agent {
 	}
 
 	private void writeAllEntries(OutputStreamWriter writer) throws Exception {
+        // update the last time someone pulled profiling information from me
+        lastPullTime = System.currentTimeMillis();
 		Object[] entries = entryQueue.toArray();
 		for (Object entry : entries) {
 			String[] currEntries = (String[]) entry;
@@ -195,10 +209,9 @@ public class Agent {
 		}
 
 		private byte[] getBytes(String className) {
-			System.out.println("would have instrumented " + className);
 			if (shouldInstrument(className)) {
 				byte[] transformedBytes = getInstrumentedVersion(className);
-				System.out.println("did instrument " + className);
+				System.out.println("instrumented " + className);
 				return transformedBytes;
 			} else {
 				return null;
