@@ -15,6 +15,12 @@
 			<scope>system</scope>
 			<systemPath>${java.home}/../lib/tools.jar</systemPath>
 		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
@@ -39,9 +45,10 @@
 				<artifactId>maven-jar-plugin</artifactId>
 				<configuration>
 					<archive>
-                      <manifestEntries>
-                        <Agent-Class>com.imaginea.profiler.Agent</Agent-Class>
-                      </manifestEntries>
+						<manifestEntries>
+							<Agent-Class>org.apurba.profiler.Agent</Agent-Class>
+                            <Can-Retransform-Classes>true</Can-Retransform-Classes>
+						</manifestEntries>
 					</archive>
 				</configuration>
 			</plugin>

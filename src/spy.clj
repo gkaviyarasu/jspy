@@ -72,17 +72,27 @@
   (GET "/vms" [] 
        (convert-and-json-response (list-vms)))
   (GET "/vms/attached" [] 
-       (convert-and-json-response (let [vms (list-profiled-vms)]
-                                    (if (nil? vms)
-                                      '()
-                                      vms))))
+       (convert-and-json-response 
+        (let [vms (list-profiled-vms)]
+          (if (nil? vms) '() vms))))
   (POST "/vms/attach" [vmId] 
         (do 
           (attach-vm vmId) 
           (json-response vmId)))
-  (POST "/vms/detach" [vmId] (convert-and-json-response (detach-vm vmId)))
-  (POST "/vms/command" [vmId command] (json-response (str "{\"response\":" (run-command-on-vm vmId command) "}")))
-  (GET "/vms/response" [vmId] (json-response (let [responseStr (get-result-from-vm vmId)] (if (nil? responseStr) "try again" responseStr))))
+  (POST "/vms/detach" [vmId] 
+        (convert-and-json-response 
+         (detach-vm vmId)))
+  (POST "/vms/command" [vmId command] 
+        (json-response 
+         (str "{\"response\":" (run-command-on-vm vmId command) "}")))
+  (GET "/vms/response" [vmId] 
+       (json-response 
+        (let [responseStr (get-result-from-vm vmId)] 
+          (if (nil? responseStr) "try again" responseStr))))
+  (POST "/vms/profile" [vmId locations]
+        (do 
+          (profile-vm vmId locations)
+          (json-response "{\"response\":\"done\"}")))
   (route/resources "/")
 )
 

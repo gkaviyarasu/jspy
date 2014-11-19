@@ -1,5 +1,5 @@
-;; vm-commmands used for attach, detach things apart from profiler work
-(ns vm-command
+(ns ^{:doc "vm-commmands used for attach, detach things apart from profiler work"}
+      vm-command
   (:use [local-profiler])
   (:import 
    [sun.tools.jps Arguments Jps]
@@ -61,10 +61,15 @@
     (.get-result (get-profiler vmId) 10)
     (str "{\"response\":\"No profiler attached for the given vmId\"}")))
 
+(defn profile-vm [^String vmId fileNames]
+  (.profile-locations (get-profiler vmId) fileNames))
+
 (defn list-profiled-vms
   "Gets a list of vms which are currently being profiled"
   []
   (keys @attachedVmManager))
 
-(defn profilers[]
-  (print attachedVmManager))
+(defn profilers
+  "utility method to get the profiled vms in shell"
+  []
+  attachedVmManager)

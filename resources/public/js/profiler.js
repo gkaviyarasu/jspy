@@ -5,6 +5,7 @@ $(function() {
     var lastRanCommand = "";
     var lastSelectedVmId = null;
     var currentlyAttaching = false;
+    var globalEventHandlers = {};
 
 	var pageLayout = $('body').layout({
 		resizeWhileDragging	: true,
@@ -20,7 +21,9 @@ $(function() {
 	});
 
     function jsonDataSource(url) {
-        return Promise.resolve($.ajax(url));
+        var promise = Promise.resolve($.ajax(url));
+        promise.toString = function(){return url;};
+        return promise;
     }
 
     function showHelp(message) {
@@ -33,16 +36,16 @@ $(function() {
     function render(where, what) {
         var dataSource, returnVal;
         if (typeof what === "string") {
-            dataSource = jsonDataSource(what)
+            dataSource = jsonDataSource(what);
         } else {
             dataSource = what;
         }
 
-       
         returnVal = {
             using: function(renderer) {
                 dataSource.then(function(data) {
                     renderer.call(this, where, data);
+                    window.dispatchEvent(new CustomEvent('rendered', {'detail': dataSource} ));
                 });
                 return returnVal;
             },
@@ -54,7 +57,7 @@ $(function() {
                 showHelp(message);
                 return returnVal;
             }
-        }
+        };
         return returnVal;
 
     }
@@ -64,9 +67,9 @@ $(function() {
             function(data){
                 var selector = $("#attached-vms");
                 if (data) {
-                    selector.find("option:not(:first)").remove()
+                    selector.find("option:not(:first)").remove();
                     data.forEach(function(vmId) {
-                        selector.find("option:first").after("<option value='"+vmId+"'>"+vmId+"</option>")
+                        selector.find("option:first").after("<option value='"+vmId+"'>"+vmId+"</option>");
                     });
                 }
                 // we can not select an option in the same function where the option is added.
@@ -80,15 +83,14 @@ $(function() {
     window.renderers = {};
 
     function jsonViewRenderer(selector, data) {
-        $(selector).JSONView(data)
+        $(selector).JSONView(data);
    }
 
-    window.renderers["jsonViewRenderer"] = jsonViewRenderer;
+    window.renderers.jsonViewRenderer = jsonViewRenderer;
 
     function attachToVM(vmId) {
-        var vmId = '' + vmId;
         if (currentlyAttaching === false) {
-            jsonPost("/vms/attach", {'vmId':vmId}).then(
+            jsonPost("/vms/attach", {'vmId': '' + vmId}).then(
                 function(data){
                     currentlyAttaching = false;
                     selectedVmId = vmId;
@@ -154,12 +156,13 @@ $(function() {
         return promise;
     }
 
-    function runInteractiveCommandOnVm(vmId, command, reultHelp) {
+    function runInteractiveCommandOnVm(vmId, command, resultHelp) {
+        showHelp("Getting data for "+resultHelp);
         jsonPost("/vms/command", 
-                     {'vmId':vmId, 'command':command}
+                     {'vmId':''+vmId, 'command':command}
                 ).then(function(data){
                     render("body > .ui-layout-center > .command-display",
-                           jsonPost("/vms/response?vmId="+vmId, "", 'GET', true))
+                           jsonPost("/vms/response?vmId="+('' + vmId), "", 'GET', true))
                         .using(renderers.jsonViewRenderer)
                         .showHelp(resultHelp);
                          });
@@ -174,7 +177,13 @@ $(function() {
         if ((commandToRun !== lastRanCommand) && (commandToRun !== 'none')) {
             if (commandToRun === 'detachVm') {
                 detachFromVM();
-            } else {
+            } else if (commandToRun === 'startProfiling') {
+                if (startProfiling() === false) {
+                    return;
+                }
+            } else if (commandToRun === 'stopProfiling') {
+                stopProfiling();
+            }else {
                 if (commandToRun === 'runCustomFunction') {
                     commandToRun = $(".command-display").text();
                 }
@@ -216,7 +225,31 @@ $(function() {
         }
     }).showHelp("Please select the id of the vm you would like to attach to");
 
+    function startProfiling() {
+        var classLocations = [];
+        $(".ui-layout-center .level1 li input:checkbox:checked").each(function(){classLocations.push($(this).next('span').text().replace(/"/g,'').replace("file:",""));});
+        if (classLocations.length > 0) {
+            jsonPost("/vms/profile", 
+                     {'vmId':selectedVmId, 'locations':classLocations}
+                ).then(function(data){
+                        showHelp("started profiling");
+                });
+
+            console.log(classLocations);
+            return true;
+        } else {
+            showHelp("Select class locations and then start profiling");
+            return false;
+        }
+    }
+
+    function stopProfiling() {
+    }
+
     showProfiledVms();
+    window.addEventListener('rendered', function(event){
+        $(".ui-layout-center .level1 li span").before(function(){return "<input type='checkbox' class='node-selector'></input>";});
+    });
 
     window.jsonPost = jsonPost;
     window.runInteractiveCommandOnVm = runInteractiveCommandOnVm;
