@@ -12,6 +12,13 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
 
     function renderCommands(commands) {
         $('.possible-commands').show();
+        var selector = $("#user-commands");
+        selector.find("option:not(:first)").remove();
+        if (commands) {
+            commands.forEach(function(command) {
+                selector.find("option:first").after("<option value='"+command.name + "'>"+command.help+"</option>");
+                });
+        }
     }
 
     function renderAttachedVMs(vmIds, selectedVMId) {

@@ -70,7 +70,7 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
 
         eventBus.on("vmChanged", function(event) {
             commandManager.setCurrentVM(event.detail);
-            renderer.renderCommands(commandManager.getCommands);
+            renderer.renderCommands(commandManager.getCommands());
             eventBus.emit("runCommand", 'dumpThreads');
        });
 

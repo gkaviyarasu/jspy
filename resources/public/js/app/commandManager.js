@@ -32,7 +32,9 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
         ds.forJSON("/vms/command", {'vmId': vmId, 'command':command}, 'POST')
             .then(function(data) {
                 ds.forJSON("/vms/response?vmId="+vmId, '','GET', true)
-                    .then(function(data) {fulfill(data)}, function(){reject("command " + command + " on vm "+vmId + "could not be completed successfully")});
+                    .then(function(data) {fulfill(data)}, 
+                          function(){
+                              reject("command " + command + " on vm "+vmId + "could not be completed successfully")});
             });
         
     }
@@ -41,7 +43,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
         currentVM = '' + vmId;
     }
 
-    function registerCommand(name, operation, helpMsg) {
+    function registerCommand(name, operation, helpMsg, internal) {
         commandRegistry[name] = {
             "name" : name,
             "help": helpMsg,
@@ -54,7 +56,8 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                     }
                 });
                 return promise;
-            }
+            },
+            "internal" : internal
         }
         eventBus.emit('commandRegistered', {'name': name});
     }
@@ -77,7 +80,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                             reject("In middle of attach");
                         }
                     },
-                    "Attach to the VM");
+                    "Attach to the VM", true);
 
 
     registerCommand("detachFromVM", 
@@ -92,16 +95,16 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                         ds.forJSON("/vms/attached")
                             .then(function(data){fulfill(data)});
                     },
-                    "List all VMs on this machine");
+                    "List all monitored VMs");
 
-    registerCommand("direct", runCommandOnVM, "Run the passed param on VM");
+    registerCommand("direct", runCommandOnVM, "Run the passed param on VM", true);
 
     registerCommand("listVMs",
                     function listAttachedVMs(fulfill, reject) {
                         ds.forJSON("/vms")
                             .then(function(data){fulfill(data)});
                     },
-                    "list all the vms currently present");
+                    "List all running vms");
 
     registerCommand("dumpThreads", null, "Show thread dump");
     registerCommand("getClassLocations", null, "Show class locations");
@@ -119,8 +122,12 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
         "setCurrentVM" : setCurrentVM,
         "getCommands" : function() {
             var commands = [];
+            var command = null;
             for (var el in commandRegistry) {
-                commands.push(commandRegistry[el]);
+                command = commandRegistry[el];
+                if (command.internal !== true) {
+                    commands.push(command);
+                }
             }
             return commands;
         }
