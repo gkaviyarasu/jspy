@@ -57,7 +57,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                 });
                 return promise;
             },
-            "internal" : internal
+            "editor" : (internal)? false:true
         }
         eventBus.emit('commandRegistered', {'name': name});
     }
@@ -95,7 +95,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                         ds.forJSON("/vms/attached")
                             .then(function(data){fulfill(data)});
                     },
-                    "List all monitored VMs");
+                    "List all monitored VMs", true);
 
     registerCommand("direct", runCommandOnVM, "Run the passed param on VM", true);
 
@@ -104,11 +104,37 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                         ds.forJSON("/vms")
                             .then(function(data){fulfill(data)});
                     },
-                    "List all running vms");
+                    "List all running vms", true);
 
     registerCommand("dumpThreads", null, "Show thread dump");
     registerCommand("getClassLocations", null, "Show class locations");
     registerCommand("dumpThreadNames", null, "Show thread names");
+
+    registerCommand("startProfiling",
+                    function profileVM(fulfill, reject, classLocations, vmId) {
+                        ds.forJSON("/vms/profile", 
+                                   {'vmId': ''+vmId, 'locations':classLocations}, 'POST')
+                            .then(function(data){
+                                fulfill(data);
+                            });
+                    },
+                    "starts profiling the currently selected VM", true);
+
+    registerCommand("stopProfiling",
+                    function stopProfiling(fulfill, reject, param, vmId) {
+                        ds.forJSON("/vms/unprofile", 
+                                   {'vmId': ''+vmId}, 'POST')
+                            .then(function(data){
+                                fulfill(data);
+                            });
+                    },
+                    "stops profiling the currently selected VM", true);
+
+    registerCommand("getProfiledResults",
+                    function(fulfill, reject, param, vmId) {
+                        runCommandOnVM(fulfill, reject, "get-all-entries", vmId);
+                    },
+                    "gets results of the current profiling info", true);
 
     function getDirectCommandWraper(cmdName) {
         return function(fulfill, reject) {

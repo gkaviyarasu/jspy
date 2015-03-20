@@ -5,7 +5,7 @@ A simple java trace utility
 ## Requirements
 
 1. Lein 1 or 2 
-2. JDK 1.6
+2. JDK 1.6 or above
 
 ## Usage
 
@@ -14,12 +14,12 @@ A simple java trace utility
 
     Moving it to a true profiler mode, so in case the process has not been started with any flags, it will still be able to pull basic information.
     
-    In case a vm started with jvm args `-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=<port-number>` we can pull off more information.
-    
 - Server is started on port 8585, connect to http://localhost:8585
-- Fill in the port number and click on attach
-- To see the trace click on detach
-- Exit with `Ctrl-C`
+- It shows all the currently running VMs on left panel.
+- Click on any vmid, it will do an automatic attach and show classloader information
+- To trace all classes in a jar, select it and click instrument
+- On the new view we can see running methods
+- we can attach to multiple vms quickly switch between vms and other fun stuff
 
 ## License
     
@@ -28,7 +28,6 @@ A simple java trace utility
 
 ## Under the hood
 Depends on java profiling interface and embedded javascript engine to give maximum support for selective profiling.
-Depends on java debug, captures all the method entry and exit events and creates a tree out of it.
 
 ## Troubleshooting  
 1. If http port 8585 is already bound to some other process, change the port in spy.clj at the last line  

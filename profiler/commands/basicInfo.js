@@ -1,5 +1,9 @@
-importPackage(java.lang.reflect);
-importPackage(java.lang.management);
+try {
+    importPackage(java.lang)
+}catch(error) {
+    Thread = Java.type("java.lang.Thread");
+    Class = Java.type("java.lang.Class");
+}
 
 var _ = {};
 _['toArray'] = function(col) { return (col['toArray'])? col.toArray():col };

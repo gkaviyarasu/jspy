@@ -64,6 +64,9 @@
 (defn profile-vm [^String vmId fileNames]
   (.profile-locations (get-profiler vmId) fileNames))
 
+(defn unprofile-vm [^String vmId]
+  (.unprofile (get-profiler vmId)))
+
 (defn list-profiled-vms
   "Gets a list of vms which are currently being profiled"
   []

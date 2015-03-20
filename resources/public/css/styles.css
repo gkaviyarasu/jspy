@@ -214,3 +214,7 @@ path.link {
     border: 1px solid black;
     background-color: grey;
 }
+
+.ui-layout-center > .actions {
+    background-color: #DDD;
+}

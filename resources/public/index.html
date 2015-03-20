@@ -1,12 +1,10 @@
-<!DOCTYPE html >
-<html lan="en">
+<!DOCTYPE html>
+<html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>J-SPY</title>
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="./lib/bootstrap.2.2.1.min.css" />
+    <title>JSPY</title>
+    <script data-main="js/app" src="js/lib/require.js"></script>
+    <link href="./lib/bootstrap.2.2.1.min.css" rel="stylesheet"/>
     <link href="./lib/bootstrap-responsive.2.2.1.min.css" rel="stylesheet">
 	<link href="./lib/layout/jquery.layout.css" rel='stylesheet'/>
 	<link href="./lib/contextMenu/jquery.contextMenu.css" rel='stylesheet'/>
@@ -15,50 +13,39 @@
   </head>
   <body>
 	<div class="ui-layout-north  top-header">
-		<div class="row">
-			<div class="alert alert-success" id="helpMsg" style="display:none">
-				<strong>Success!</strong> Tracing started, press stop to get the trace.
-			</div>
+	  <div class="row">
+		<div class="alert alert-success" id="helpMsg" style="display:none">
+		  <strong>Success!</strong> Tracing started, press stop to get the trace.
 		</div>
-		<div>
-			<div class="page-title-container" style="float:left;">
-				<h4>J-SPY</h4>
-			</div>
-			<div id="attachDiv" style="float:right;">
-              Attached to : 
-              <select id="attached-vms"> 
-                <option value="none">None</option>
-              </select>
-			</div>
-			<div style="clear:both;"></div>
+	  </div>
+	  <div>
+		<div class="page-title-container" style="float:left;">
+		  <h4>J-SPY</h4>
 		</div>
+		<div id="attachDiv" style="float:right;">
+          Attached to : 
+          <select id="attached-vms"> 
+            <option value="none">None</option>
+          </select>
+		</div>
+		<div style="clear:both;"></div>
+	  </div>
 	</div>
 	<div class="ui-layout-west">
+      <div class="actions"></div>
+      <div class="data"></div>
 	</div> 
 	<div class="ui-layout-center">
-      <div class="possible-commands" style="display:none" >
+      <div class="actions" style="display:none" >
         Commands : 
         <select id="user-commands">
           <option value="none" selected>None</option> 
-          <option value="dumpThreads">Thread Dump</option> 
-          <option value="getClassLocations">Class Locations</option>
-          <option value="dumpThreadNames">Thread Names</option>
-          <option value="runCustomFunction">Run editor function</option>
-          <option value="startProfiling">Profile Selected Class Locations</option>
-          <option value="stopProfiling">Stop profiling</option>
-          <option value="detachVm">Detach from the currently attached VM</option>
+        </select>
+        Profiles : 
+        <select id="vm-profiles">
+          <option value="none" selected>None</option> 
         </select>
       </div>
-      <div class="command-display" tabindex="2" contenteditable="true"></div>
+      <div class="data" tabindex="2"></div>
 	</div>
-
-    <script type="text/javascript" src="./lib/jquery-1.9.1.min.js"></script>
-	<script type="text/javascript" src="./lib/jquery-ui-latest.js"></script>
-	<script type="text/javascript" src="./lib/coffee-script-1.7.1.min.js"></script>
-	<script type="text/javascript" src="./lib/layout/jquery.layout.min.js"></script>
-	<script type="text/javascript" src="./lib/contextMenu/jquery.contextMenu.js"></script>
-    <script type="text/javascript" src="./lib/jquery.jsonview.js"></script>
-    <script type="text/javascript" src="./lib/promise-6.0.0.js"></script>
-    <script type="text/javascript" src="./js/profiler.js"></script>
-  </body>
 </html>

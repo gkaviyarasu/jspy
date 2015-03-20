@@ -11,13 +11,15 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
     }
 
     function renderCommands(commands) {
-        $('.possible-commands').show();
+        $('body > .ui-layout-center > .actions').show();
         var selector = $("#user-commands");
         selector.find("option:not(:first)").remove();
         if (commands) {
             commands.forEach(function(command) {
-                selector.find("option:first").after("<option value='"+command.name + "'>"+command.help+"</option>");
-                });
+                if (command.editor) {
+                    selector.find("option:first").after("<option value='"+command.name + "'>"+command.help+"</option>");
+                }
+            });
         }
     }
 
@@ -47,13 +49,17 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
             return this.render("body > .ui-layout-west", data);
         },
         renderMain: function(data) {
-            return this.render("body > .ui-layout-center > .command-display", data);
+            return this.render("body > .ui-layout-center", data);
         },
         render : function(where, data) {
-            renderJSON(where, data);
+            renderJSON(where + " > .data", data);
             var returnVal= {
                 addHandler: function(eventName, eventHandler) {
-                    $(where).on(eventName, eventHandler);
+                    $(where + " > .data").on(eventName, eventHandler);
+                },
+                addAction: function(icon, eventName, toolTip, eventHandler) {
+                    
+                    $(where + " > .action").on("click", eventHandler);
                 }
             };
             eventBus.emit("rendered", {'where':where, 'data':data});

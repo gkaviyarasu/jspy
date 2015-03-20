@@ -1,4 +1,9 @@
-importPackage(javax.management);
+try {
+    importPackage(javax.management);
+}catch(error){
+    ManagementFactory = Java.type("java.lang.management.ManagementFactory");
+    ObjectName = Java.type("javax.management.ObjectName");
+}
 
 function listMbeans() {
     var svr = ManagementFactory.getPlatformMBeanServer();

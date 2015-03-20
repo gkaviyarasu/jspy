@@ -3,7 +3,7 @@
   (use [profiler-util])
   (:import 
    [java.net ServerSocket SocketException]
-   [java.io File InputStream Closeable]
+   [java.io File InputStream Closeable IOException]
    [java.util.concurrent ArrayBlockingQueue TimeUnit]))
 
 (def allThreadCommonLog (atom '()))
@@ -60,10 +60,14 @@
 
 
 (defn- load-agent [profiler profiledVm]
-      (on-thread #(.loadAgent 
-                   profiledVm
-                   (str (System/getProperty "user.dir") "/profiler/agent/target/custom-agent.jar")
-                   (.toString (.get-port profiler)))))
+  (on-thread #(
+               (try
+                 (.loadAgent  profiledVm
+                              (str (System/getProperty "user.dir") "/profiler/agent/target/custom-agent.jar")
+                              (.toString (.get-port profiler)))
+               (catch IOException e 
+                 (print "Problems in the agent lifecycle, could be normal too in case there is an abnormal VM termination")
+                 (.printStackTrace e))))))
 
 (defn- start-profiler-server [profiler]
   "starts the profiler server and return the profiler"
@@ -113,7 +117,8 @@
   (run-command [this command])
   (get-result [this waitTime])
   (get-port [this])
-  (profile-locations [this locations]))
+  (profile-locations [this locations])
+  (unprofile [this]))
 
 (defprotocol AsyncCommandRunner
   (set-response [this response])
@@ -135,8 +140,10 @@
     (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/jmxInfo.js")))
     (start-profiler-server this)
     (load-agent this profiledVM))
+
   (stop-p [this] 
     (stop-profiler-server this))
+
   (profile-locations [this locations]
     (let [to-instrument (instrument-classes (find-classes locations))
           class-regex (:regex to-instrument)
@@ -151,11 +158,16 @@
                         class-regex " "
                         index-file " "
                         class-file " ")))))
+
+  (unprofile [this]
+    (.set-command this "stop-profiling"))
+
   (run-command [this command]
     (do 
       (.clear responseQ)
       (reset! lastIncompleteResponse "")
       (.set-command this command)))
+
   (get-result [this waitTime]
     (let [resultTillNow (str @lastIncompleteResponse (combine-all responseQ))]
       (if (nil? (get-well-formed-response resultTillNow))
@@ -166,6 +178,7 @@
         (do 
           (reset! lastIncompleteResponse "")
           (get-well-formed-response resultTillNow)))))
+
   (get-port [this] (.getLocalPort socket)))
 
 
@@ -179,4 +192,5 @@
   (.set-command profiler "profile-classes <regex> <indexfile> <classfile>")
  (.set-command profiler "stop-profiling")
  (.set-command profiler "get-all-entries")
+ (.clear (.responseQ (get-profiler "5127")))
 )

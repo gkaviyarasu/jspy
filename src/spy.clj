@@ -93,6 +93,10 @@
         (do 
           (profile-vm vmId locations)
           (json-response "{\"response\":\"done\"}")))
+  (POST "/vms/unprofile" [vmId]
+        (do 
+          (unprofile-vm vmId)
+          (json-response "{\"response\":\"done\"}")))
   (route/resources "/")
 )
 

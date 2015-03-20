@@ -103,7 +103,6 @@ public class Agent {
 
 	private ScriptEngine createEngine() throws ScriptException {
 		ScriptEngine engine = new ScriptEngineManager().getEngineByName("javascript");
-		engine.eval("importPackage(java.lang)");
 		return engine;
 	}
 
@@ -129,6 +128,7 @@ public class Agent {
                     w.write(boundary);
 					writeAllEntries(w);
                     w.write(boundary);
+                    w.flush();
 				} else {
 					Object obj = engine.eval(expr);
 
@@ -139,7 +139,7 @@ public class Agent {
                     w.write(boundary);
 					w.write(obj.toString());
                     w.write(boundary);
-					w.flush();
+                    w.flush();
 				}
 			} catch (ScriptException e) {
 				e.printStackTrace(errStream);

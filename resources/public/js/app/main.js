@@ -1,6 +1,7 @@
-define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview" ], function($, renderer, commandManager, eventBus) {
+define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/decorators" ], function($, renderer, commandManager, eventBus, decorators) {
 
     var showHelp = renderer.showHelp;
+    var keepProfiling = false;
 
     function getHelpDisplayer(msg) {
         return function(){
@@ -18,7 +19,8 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
                     .runCommand("attachToVM", vmId)
                     .onSuccess(function(){
                         updateAttachedVMList(vmId);
-                        eventBus.emit("vmChanged", vmId);
+                        getHelpDisplayer("Attach completed, running default command after attach");
+                        setTimeout(function() { eventBus.emit("vmChanged", vmId)}, 1000);
                     })
                     .onFailure(getHelpDisplayer("Attach Failed"));
                 return false;
@@ -58,6 +60,10 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
         eventBus.setDelegate($('body')[0]);
 
         eventBus.on("appStarted", function() {
+            eventBus.emit("listVMs");
+        });
+
+        eventBus.on("listVMs", function() {
             commandManager
                 .runCommand("listVMs")
                 .onSuccess(function(data) {
@@ -80,13 +86,37 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
             eventBus.emit('commandChanged');
         });
         
-        $('#user-commands').on('change', function(){
-            eventBus.emit('commandChanged');
+        eventBus.on('startProfiling', function(event) {
+            keepProfiling = true;
+            commandManager
+                .runCommand('startProfiling', event.detail)
+                .onSuccess(function(data) {
+                    eventBus.emit('updateProfiledResults');
+                });
         });
 
-        $('#attached-vms').on('change', function(event){
-            var vmId = $(event.target).val();
-            eventBus.emit('vmChanged', vmId);
+        eventBus.on('stopProfiling', function(event) {
+            keepProfiling = false;
+            commandManager
+                .runCommand('stopProfiling')
+                .onSuccess(function(data) {
+                    eventBus.emit('stoppedProfiling');
+                });
+
+        });
+
+        eventBus.on('updateProfiledResults', function(event) {
+            commandManager
+                .runCommand('getProfiledResults')
+                .onSuccess(function(data) {
+                    eventBus.emit('displayProfiledResults', data);
+                })
+                .onFailure(function(data) {
+                    showHelp("No data yet from the profiler, continuing the profiling");
+                });
+            if (keepProfiling) {
+                setTimeout(function(){eventBus.emit('updateProfiledResults');}, 2000);
+            }
         });
 
         eventBus.on('commandChanged', function(event) {
@@ -95,9 +125,18 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
                 commandManager
                     .runCommand(newCommand)
                     .onSuccess(function(data) {
-                        renderer.renderMain(data)
+                        renderer.renderMain(data);
                     });
             }
+        });
+
+        $('#user-commands').on('change', function(){
+            eventBus.emit('commandChanged');
+        });
+
+        $('#attached-vms').on('change', function(event){
+            var vmId = $(event.target).val();
+            eventBus.emit('vmChanged', vmId);
         });
 
         eventBus.emit("appStarted");
