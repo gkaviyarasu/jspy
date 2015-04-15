@@ -8,7 +8,7 @@ define(["promise", "jquery"], function(Promise, $) {
             type: httpVerb || "POST",
             url: url,
             processData: false,
-            data: JSON.stringify(data), 
+            data: (data)? JSON.stringify(data):null, 
             dataType: "json"
         }).done(function(data){
             promiseHolder.fulfill(data);
@@ -28,7 +28,7 @@ define(["promise", "jquery"], function(Promise, $) {
                 var retryCounter = promiseHolder.retryCounter;
                 retryCounter = (retryCounter)? retryCounter + 1 : 1;
                 if (retryCounter < 4) {
-                    setTimeout(retryingFetch, 300 * retryCounter, url, data,httpVerb, promiseHolder);
+                    setTimeout(retryingFetch, 300 * retryCounter * retryCounter, url, data,httpVerb, promiseHolder);
                 } else {
                     promiseHolder.reject(errorThrown);
                 }
@@ -39,11 +39,11 @@ define(["promise", "jquery"], function(Promise, $) {
     return {
         forJSON: function(url, data, verb, retry) {
             var promise = new Promise(function(fulfill, reject) {
-                var fetchingMethod = (retry)? retryingFetch:fetch
+                var fetchingMethod = (retry)? retryingFetch:fetch;
                 verb = verb || "GET";
                 fetchingMethod.call(this, url, data, verb, {"fulfill":fulfill, "reject":reject});
             });
             return promise;
         }
-    }
+    };
 });

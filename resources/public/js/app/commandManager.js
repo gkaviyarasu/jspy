@@ -14,7 +14,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                 this.promise.then(null, this.callBack);
                 return this;
             }
-        }
+        };
     }
 
     function runCommand(cmdName, param) {
@@ -28,13 +28,14 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
         }
     }
 
-    function runCommandOnVM(fulfill, reject, command, vmId) {
+    function runCommandOnVM(fulfill, reject, command, vmId, responseUrl) {
+        responseUrl = responseUrl || "/vms/response";
         ds.forJSON("/vms/command", {'vmId': vmId, 'command':command}, 'POST')
             .then(function(data) {
-                ds.forJSON("/vms/response?vmId="+vmId, '','GET', true)
-                    .then(function(data) {fulfill(data)}, 
+                ds.forJSON(responseUrl + "?vmId="+vmId, null,'GET', true)
+                    .then(function(data) {fulfill(data);}, 
                           function(){
-                              reject("command " + command + " on vm "+vmId + "could not be completed successfully")});
+                              reject("command " + command + " on vm "+vmId + "could not be completed successfully");});
             });
         
     }
@@ -58,7 +59,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
                 return promise;
             },
             "editor" : (internal)? false:true
-        }
+        };
         eventBus.emit('commandRegistered', {'name': name});
     }
 
@@ -86,14 +87,14 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
     registerCommand("detachFromVM", 
                     function detachFromVM(fulfill, reject, param, vmId) {
                         ds.forJSON("/vms/detach", {'vmId': ''+vmId}, 'POST')
-                            .then(function(data){fulfill(data)})
+                            .then(function(data){fulfill(data);});
                     },
                     "Detach from the VM");
 
     registerCommand("listAttachedVMs",
                     function listAttachedVMs(fulfill, reject) {
                         ds.forJSON("/vms/attached")
-                            .then(function(data){fulfill(data)});
+                            .then(function(data){fulfill(data);});
                     },
                     "List all monitored VMs", true);
 
@@ -102,7 +103,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
     registerCommand("listVMs",
                     function listAttachedVMs(fulfill, reject) {
                         ds.forJSON("/vms")
-                            .then(function(data){fulfill(data)});
+                            .then(function(data){fulfill(data);});
                     },
                     "List all running vms", true);
 
@@ -110,42 +111,18 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
     registerCommand("getClassLocations", null, "Show class locations");
     registerCommand("dumpThreadNames", null, "Show thread names");
 
-    registerCommand("startProfiling",
-                    function profileVM(fulfill, reject, classLocations, vmId) {
-                        ds.forJSON("/vms/profile", 
-                                   {'vmId': ''+vmId, 'locations':classLocations}, 'POST')
-                            .then(function(data){
-                                fulfill(data);
-                            });
-                    },
-                    "starts profiling the currently selected VM", true);
-
-    registerCommand("stopProfiling",
-                    function stopProfiling(fulfill, reject, param, vmId) {
-                        ds.forJSON("/vms/unprofile", 
-                                   {'vmId': ''+vmId}, 'POST')
-                            .then(function(data){
-                                fulfill(data);
-                            });
-                    },
-                    "stops profiling the currently selected VM", true);
-
-    registerCommand("getProfiledResults",
-                    function(fulfill, reject, param, vmId) {
-                        runCommandOnVM(fulfill, reject, "get-all-entries", vmId);
-                    },
-                    "gets results of the current profiling info", true);
 
     function getDirectCommandWraper(cmdName) {
         return function(fulfill, reject) {
             runCommandOnVM(fulfill, reject, cmdName + '()', currentVM);
-        }
+        };
     }
 
     return {
         "registerCommand" : registerCommand,
         "runCommand":runCommand,
         "setCurrentVM" : setCurrentVM,
+        "runCommandOnVM" : runCommandOnVM,
         "getCommands" : function() {
             var commands = [];
             var command = null;
@@ -157,5 +134,5 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
             }
             return commands;
         }
-    }
+    };
 });

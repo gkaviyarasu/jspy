@@ -182,15 +182,15 @@ public class Agent {
 	private void writeAllEntries(OutputStreamWriter writer) throws Exception {
         // update the last time someone pulled profiling information from me
         lastPullTime = System.currentTimeMillis();
-		Object[] entries = entryQueue.toArray();
-		for (Object entry : entries) {
-			String[] currEntries = (String[]) entry;
+        Object entry = null;
+        while(((entry = entryQueue.poll())!=null) && ((System.currentTimeMillis() - lastPullTime) < 200)) {
+            String[] currEntries = (String[]) entry;
 			for (String currEntry : currEntries) {
 				writer.write(currEntry);
 				writer.write(" ");
 			}
 			writer.write("\n");
-		}
+        }
 		writer.flush();
 	}
 
@@ -220,7 +220,7 @@ public class Agent {
 
 		private boolean shouldInstrument(String className) {
 			try {
-				return classPattern.matcher(className).matches();
+				return classJournal.contains(className) && classPattern.matcher(className).matches();
 			} catch (Exception exc) {
 				// sorry, but this better not fail as everything will collapse
 				exc.printStackTrace();
@@ -310,7 +310,7 @@ public class Agent {
 			}
 		}
 
-		protected boolean contains(String key) {
+		public boolean contains(String key) {
 			return index.containsKey(key);
 		}
 

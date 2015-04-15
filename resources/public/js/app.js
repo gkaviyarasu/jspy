@@ -6,7 +6,8 @@ requirejs.config({
         "promise": "../lib/promise-6.0.0",
         "coffee-script": "../lib/coffee-script-1.7.1.min",
         "jquery-layout": "../lib/layout/jquery.layout.min",
-        "jquery-jsonview": "../lib/jquery.jsonview"
+        "jquery-jsonview": "../lib/jquery.jsonview",
+        "d3": "../lib/d3.v3.min"
     },
     shim: {
         "jquery-ui-latest": ["jquery"],

@@ -1,4 +1,4 @@
-define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/decorators" ], function($, renderer, commandManager, eventBus, decorators) {
+define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler"], function($, renderer, commandManager, eventBus, profiler) {
 
     var showHelp = renderer.showHelp;
     var keepProfiling = false;
@@ -6,7 +6,7 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
     function getHelpDisplayer(msg) {
         return function(){
             showHelp(msg);
-        }
+        };
     }
 
     function attachToVM(event) {
@@ -20,7 +20,7 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
                     .onSuccess(function(){
                         updateAttachedVMList(vmId);
                         getHelpDisplayer("Attach completed, running default command after attach");
-                        setTimeout(function() { eventBus.emit("vmChanged", vmId)}, 1000);
+                        setTimeout(function() { eventBus.emit("vmChanged", vmId);}, 1000);
                     })
                     .onFailure(getHelpDisplayer("Attach Failed"));
                 return false;
@@ -86,39 +86,6 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
             eventBus.emit('commandChanged');
         });
         
-        eventBus.on('startProfiling', function(event) {
-            keepProfiling = true;
-            commandManager
-                .runCommand('startProfiling', event.detail)
-                .onSuccess(function(data) {
-                    eventBus.emit('updateProfiledResults');
-                });
-        });
-
-        eventBus.on('stopProfiling', function(event) {
-            keepProfiling = false;
-            commandManager
-                .runCommand('stopProfiling')
-                .onSuccess(function(data) {
-                    eventBus.emit('stoppedProfiling');
-                });
-
-        });
-
-        eventBus.on('updateProfiledResults', function(event) {
-            commandManager
-                .runCommand('getProfiledResults')
-                .onSuccess(function(data) {
-                    eventBus.emit('displayProfiledResults', data);
-                })
-                .onFailure(function(data) {
-                    showHelp("No data yet from the profiler, continuing the profiling");
-                });
-            if (keepProfiling) {
-                setTimeout(function(){eventBus.emit('updateProfiledResults');}, 2000);
-            }
-        });
-
         eventBus.on('commandChanged', function(event) {
             var newCommand = renderer.getCommand();
             if (newCommand != "none") {
@@ -140,5 +107,6 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
         });
 
         eventBus.emit("appStarted");
+        
     });
 });

@@ -116,6 +116,7 @@
   (stop-p [this])
   (run-command [this command])
   (get-result [this waitTime])
+  (get-raw-result [this])
   (get-port [this])
   (profile-locations [this locations])
   (unprofile [this]))
@@ -163,10 +164,12 @@
     (.set-command this "stop-profiling"))
 
   (run-command [this command]
-    (do 
-      (.clear responseQ)
-      (reset! lastIncompleteResponse "")
-      (.set-command this command)))
+    (if-not (.startsWith command "get-all-entries")
+      (do 
+        (.clear responseQ)
+        (reset! lastIncompleteResponse ""))
+      (printA "get-all-entries where we do not clear responseQ"))
+      (.set-command this command))
 
   (get-result [this waitTime]
     (let [resultTillNow (str @lastIncompleteResponse (combine-all responseQ))]
@@ -178,6 +181,12 @@
         (do 
           (reset! lastIncompleteResponse "")
           (get-well-formed-response resultTillNow)))))
+
+  (get-raw-result [this]
+    (let [resultTillNow (.get-result this 10)]
+      (if (nil? resultTillNow) nil 
+          (let [goodResp (str "{\"response\":\"" resultTillNow "\"}")]
+            (clojure.string/replace goodResp #"\n" "~#")))))
 
   (get-port [this] (.getLocalPort socket)))
 

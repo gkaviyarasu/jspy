@@ -1,4 +1,6 @@
 define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eventBus){
+    var rendererRegistry = {};
+
     function showHelp(message) {
         var divId = "helpMsg";
         $('#'+divId).html("\t" + message);
@@ -6,7 +8,7 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
         setTimeout(function(){$('#'+divId).toggle();}, 2000);
     }
 
-    function renderJSON(selector, data) {
+    function renderDefault(selector, data) {
         $(selector).JSONView(data);
     }
 
@@ -44,15 +46,21 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
         return $('#user-commands').val(optionVal || 'none');
     }
 
+    function registerRenderer(name, callback) {
+        rendererRegistry[name] = callback;
+    }
+
     return {
+        "registerRenderer" : registerRenderer,
         renderView: function(data) {
             return this.render("body > .ui-layout-west", data);
         },
         renderMain: function(data) {
             return this.render("body > .ui-layout-center", data);
         },
-        render : function(where, data) {
-            renderJSON(where + " > .data", data);
+        render : function(where, data, renderer) {
+            renderer = renderer || renderDefault; 
+            renderer.call(this, where + " > .data", data);
             var returnVal= {
                 addHandler: function(eventName, eventHandler) {
                     $(where + " > .data").on(eventName, eventHandler);
@@ -64,6 +72,12 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
             };
             eventBus.emit("rendered", {'where':where, 'data':data});
             return returnVal;
+        },
+        getMainSection: function(selector) {
+            return $("body > .ui-layout-center "+selector);
+        },
+        getLeftViewSection: function(selector) {
+            return $("body > .ui-layout-west " + selector);
         },
         renderAttachedVMs: renderAttachedVMs,
         renderCommands : renderCommands,

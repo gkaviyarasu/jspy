@@ -61,6 +61,11 @@
     (.get-result (get-profiler vmId) 10)
     (str "{\"response\":\"No profiler attached for the given vmId\"}")))
 
+(defn get-raw-result-from-vm [^String vmId]
+  (if-not (nil? (get-profiler vmId))
+    (.get-raw-result (get-profiler vmId))
+    (str "{\"response\":\"No profiler attached for the given vmId\"}")))
+
 (defn profile-vm [^String vmId fileNames]
   (.profile-locations (get-profiler vmId) fileNames))
 

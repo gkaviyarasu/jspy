@@ -89,10 +89,17 @@
        (json-response 
         (let [responseStr (get-result-from-vm vmId)] 
           (if (nil? responseStr) "try again" responseStr))))
+
+  (GET "/vms/rawresponse" [vmId] 
+       (json-response 
+        (let [responseStr (get-raw-result-from-vm vmId)] 
+          (if (nil? responseStr) "try again" responseStr))))
+
   (POST "/vms/profile" [vmId locations]
         (do 
           (profile-vm vmId locations)
           (json-response "{\"response\":\"done\"}")))
+
   (POST "/vms/unprofile" [vmId]
         (do 
           (unprofile-vm vmId)
