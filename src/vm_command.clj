@@ -40,7 +40,7 @@
   (let [profiledVm (VirtualMachine/attach vmId)
         profilee {:vm profiledVm :profiler (create-profiler)}]
     (register-attached-vm vmId profilee)
-    (.start-p (:profiler profilee) profiledVm)))
+    (.start-agent (:profiler profilee) profiledVm)))
 
 (defn detach-vm 
   "detaches the vm with given vmid"
@@ -48,7 +48,7 @@
   (if (not (nil? (get @attachedVmManager vmId)))
     (do 
      (.detach (:vm (get @attachedVmManager vmId)))
-     (.stop-p (:profiler (get @attachedVmManager vmId)))
+     (.stop-agent (:profiler (get @attachedVmManager vmId)))
      (deregister-attached-vm vmId)
      vmId)))
 
@@ -58,12 +58,12 @@
 
 (defn get-result-from-vm [^String vmId]
   (if-not (nil? (get-profiler vmId))
-    (.get-result (get-profiler vmId) 10)
+    (.get-result (get-profiler vmId))
     (str "{\"response\":\"No profiler attached for the given vmId\"}")))
 
 (defn get-raw-result-from-vm [^String vmId]
   (if-not (nil? (get-profiler vmId))
-    (.get-raw-result (get-profiler vmId))
+    (.get-profiler-result (get-profiler vmId))
     (str "{\"response\":\"No profiler attached for the given vmId\"}")))
 
 (defn profile-vm [^String vmId fileNames]

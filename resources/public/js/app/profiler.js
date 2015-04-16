@@ -81,18 +81,20 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
         var dataActionSelector = null;
         if (keepProfiling) {
             profiledData = (profiledData)? profiledData.response: null;
-            if (profiledData && profiledData.length > 0) {
-                dataActionSelector = createDataAction();
-                treeRenderer.render("body > .ui-layout-center > .data .data-profiler", createTree(profiledData));
+            if (profiledData && profiledData.length > 80) {
+                dataActionSelector = createDataSection();
+                renderer.getMainSection(dataActionSelector).text(profiledData.split("~#").join("\n") + renderer.getMainSection(dataActionSelector).text());
+                //treeRenderer.render("body > .ui-layout-center > .data .data-profiler", createTree(profiledData));
             }
         }
     });
 
     eventBus.on('forceKeepProfiling', function() {keepProfiling = true});
 
-    function createDataAction() {
-        renderer.getMainSection(".data .data-action").remove();
-        renderer.getMainSection(".data").append("<div class='data-profiler'></div>");
+    function createDataSection() {
+        if (renderer.getMainSection(".data .data-profiler").length === 0) {
+            renderer.getMainSection(".data").append("<pre class='data-profiler'></pre>");
+        }
         return ".data .data-profiler";
     }
     function renderProfilerAction() {
@@ -162,7 +164,11 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
             threadParent = parentChain[splits[1]];
             if (threadParent) {
                 // mark it as end of last entry for this thread and pop it from parent chain
-                threadParent.splice(-1, 1);
+                threadParent[threadParent.length - 1].completed =true ;
+                // in case there are no children except thread name don't pop it
+                if (threadParent.length > 1) {
+                    threadParent.splice(-1, 1);
+                }
             } else {
                 console.log("Tree may be in bad state, no start for "+JSON.stringify(splits));
             }
@@ -181,9 +187,12 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
             this.methodName = name;
         }
         this.children = [];
-
+        this.completed = false;
         this.addChild = function(entry) {
             this.children.push(entry);
+        };
+        this.toString = function() {
+            return this.tId + "->" + this.methodName;
         };
     }
 

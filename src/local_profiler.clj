@@ -37,14 +37,14 @@
                (recur (.get-command profiler)))
              (printA "noting to write")))))))))
 
-(defn- read-input [is profiler]
+(defn- read-input [is profiler f]
   (let [buffer (byte-array 4096)]
     (try 
       (loop [read (.read is buffer)]
         (when (> read 0)
           (do
             (printA (String. buffer 0 read))
-            (.set-response profiler (String. buffer 0 read)))
+            (f (String. buffer 0 read)))
           (recur (.read is buffer))))
       (catch SocketException e (print "Socket closed from other side, time to go")))))
 
@@ -54,9 +54,18 @@
                   (let [conn (.accept socket)]
                     (reset! (:connection profiler) conn)
                     (write-output conn profiler)
-                    (read-input (.getInputStream conn) profiler))
+                    (read-input (.getInputStream conn) profiler (fn[x] (.set-response profiler x)))) 
                (catch NullPointerException e (print "something was closed making the other guys null here")))))
   (print "started work to accept connections"))
+
+
+(defn- accept-profiler-connection [socket profiler]
+  (on-thread #(
+               (try
+                  (let [conn (.accept socket)]
+                    (read-input (.getInputStream conn) profiler (fn[x] (.set-profiler-response profiler x))))
+               (catch NullPointerException e (print "something was closed making the data plane disappear")))))
+  (print "started work to accept profiler data"))
 
 
 (defn- load-agent [profiler profiledVm]
@@ -69,16 +78,15 @@
                  (print "Problems in the agent lifecycle, could be normal too in case there is an abnormal VM termination")
                  (.printStackTrace e))))))
 
-(defn- start-profiler-server [profiler]
+(defn- start-control-server [profiler]
   "starts the profiler server and return the profiler"
   (print "server port opened at " (.get-port profiler) "\n")
   (accept-connection (:socket profiler) profiler)
   profiler)
 
-(defn- stop-profiler-server [profiler]
+(defn- stop-control-server [profiler]
   "stops the profiler server and return the profiler"
   (do
-    (.set-command profiler "bye")
     (close-socket @(:connection profiler))
     (close-socket (:socket profiler))
     profiler))
@@ -107,18 +115,20 @@
 (defn- get-well-formed-response [response-str]
   (let [boundary "\n------------End---------\n"]
     (if (and (.startsWith response-str boundary) 
-             (.endsWith response-str boundary))
+             (.endsWith response-str boundary)
+             (> (.length response-str) (.length boundary)))
       (subs response-str (.length boundary) (- (.length response-str) (.length boundary)))
       nil)))
 
 (defprotocol Profiler
-  (start-p [this profiledVM])
-  (stop-p [this])
+  (start-agent [this profiledVM])
+  (stop-agent [this])
   (run-command [this command])
-  (get-result [this waitTime])
-  (get-raw-result [this])
+  (get-result [this])
+  (get-profiler-result [this])
   (get-port [this])
   (profile-locations [this locations])
+  (set-profiler-response [this response])
   (unprofile [this]))
 
 (defprotocol AsyncCommandRunner
@@ -127,7 +137,7 @@
   (get-command [this])
   (set-command [this command]))
 
-(defrecord LocalProfiler [socket connection commandQ responseQ lastIncompleteResponse]
+(defrecord LocalProfiler [socket connection commandQ responseQ dataPlaneQ lastIncompleteResponse dataPlaneSocket]
 
   AsyncCommandRunner
   (set-response [this response] (.offer (:responseQ this) response))
@@ -136,14 +146,16 @@
   (get-command [this] (.take (:commandQ this)))
 
   Profiler
-  (start-p [this profiledVM] 
+  (start-agent [this profiledVM] 
     (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/basicInfo.js")))
     (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/jmxInfo.js")))
-    (start-profiler-server this)
+    (start-control-server this)
     (load-agent this profiledVM))
 
-  (stop-p [this] 
-    (stop-profiler-server this))
+  (stop-agent [this] 
+    (do
+      (.set-command this "bye")
+      (stop-control-server this)))
 
   (profile-locations [this locations]
     (let [to-instrument (instrument-classes (find-classes locations))
@@ -153,12 +165,18 @@
           ]
       (do
         (println locations class-regex index-file class-file)
-        (.set-command this 
-                      (str 
-                       "profile-classes " 
-                        class-regex " "
-                        index-file " "
-                        class-file " ")))))
+        (let [dataPlaneSocket (ServerSocket.)]
+          (do 
+            (.bind dataPlaneSocket nil)
+            (reset! (:dataPlaneSocket this) dataPlaneSocket)
+            (accept-profiler-connection dataPlaneSocket this)
+            (.set-command this 
+                          (str 
+                           "profile-classes " 
+                           class-regex " "
+                           index-file " "
+                           class-file " "
+                           (.getLocalPort @(:dataPlaneSocket this)))))))))
 
   (unprofile [this]
     (.set-command this "stop-profiling"))
@@ -167,11 +185,12 @@
     (if-not (.startsWith command "get-all-entries")
       (do 
         (.clear responseQ)
-        (reset! lastIncompleteResponse ""))
-      (printA "get-all-entries where we do not clear responseQ"))
+        (reset! lastIncompleteResponse "")))
       (.set-command this command))
 
-  (get-result [this waitTime]
+  (set-profiler-response [this response] (.offer (:dataPlaneQ this) response))
+
+  (get-result [this]
     (let [resultTillNow (str @lastIncompleteResponse (combine-all responseQ))]
       (if (nil? (get-well-formed-response resultTillNow))
         (do
@@ -182,8 +201,8 @@
           (reset! lastIncompleteResponse "")
           (get-well-formed-response resultTillNow)))))
 
-  (get-raw-result [this]
-    (let [resultTillNow (.get-result this 10)]
+  (get-profiler-result [this]
+    (let [resultTillNow (combine-all dataPlaneQ)]
       (if (nil? resultTillNow) nil 
           (let [goodResp (str "{\"response\":\"" resultTillNow "\"}")]
             (clojure.string/replace goodResp #"\n" "~#")))))
@@ -194,7 +213,7 @@
 (defn create-profiler []
   (let [socket (ServerSocket. )]
     (.bind socket  nil)
-    (LocalProfiler. socket (atom nil) (ArrayBlockingQueue. 10) (ArrayBlockingQueue. 10) (atom ""))))
+    (LocalProfiler. socket (atom nil) (ArrayBlockingQueue. 10) (ArrayBlockingQueue. 100) (ArrayBlockingQueue. 300) (atom "") (atom nil))))
 
 (comment
   regex is java regex like "org/eclipse/jetty/.*"

@@ -1,3 +1,4 @@
+
 package org.apurba.profiler;
 
 import java.io.BufferedReader;
@@ -55,8 +56,12 @@ public class Agent {
 
 	private volatile boolean shouldProfile = false;
 
+    private OutputStreamWriter dataPlaneWriter;
+
     // captures the last time the profiler pulled profiling information from this vm
     private long lastPullTime = 0L;
+
+    private Socket dataPlaneSocket;
 
 	public static Agent getInstance() {
 		return INSTANCE;
@@ -98,7 +103,7 @@ public class Agent {
 
 		ScriptEngine engine = createEngine();
 		setWriters(engine, writer);
-		interactInLoop(engine, writer, reader, errStream, MAGIC_STRING);
+		interactInLoop(engine, writer, reader, errStream);
 	}
 
 	private ScriptEngine createEngine() throws ScriptException {
@@ -112,8 +117,7 @@ public class Agent {
 		context.setErrorWriter(w);
 	}
 
-	private void interactInLoop(ScriptEngine engine, OutputStreamWriter w, BufferedReader reader,
-			PrintStream errStream, String boundary) throws IOException {
+	private void interactInLoop(ScriptEngine engine, OutputStreamWriter w, BufferedReader reader, PrintStream errStream) throws IOException {
 		String expr;
 		System.out.println("Attached to profiler");
 		while ((expr = reader.readLine()) != null) {
@@ -125,10 +129,11 @@ public class Agent {
 				} else if (expr.startsWith(STOP_PROFILING_CMD)) {
 					stopProfiling();
 				} else if (expr.startsWith(GET_ALL_ENTRIES)) {
-                    w.write(boundary);
-					writeAllEntries(w);
-                    w.write(boundary);
-                    w.flush();
+                    if (dataPlaneWriter != null) {
+                        writeAllEntries(dataPlaneWriter);
+                    } else {
+                        throw new IllegalStateException("Data Plane not set, check the order of commands");
+                    }
 				} else {
 					Object obj = engine.eval(expr);
 
@@ -136,9 +141,9 @@ public class Agent {
 						w.flush();
 						continue;
 					}
-                    w.write(boundary);
+                    w.write(MAGIC_STRING);
 					w.write(obj.toString());
-                    w.write(boundary);
+                    w.write(MAGIC_STRING);
                     w.flush();
 				}
 			} catch (ScriptException e) {
@@ -158,12 +163,13 @@ public class Agent {
 	private void profileClasses(String cmd) throws IOException {
 		shouldProfile = true;
 		String[] args = cmd.substring(PROFILE_CLASSES_CMD.length()).split(" ");
-		if (args.length == 4) {
+		if (args.length == 5) {
 			// profile classes as first arg, index file name as second param and enhanced content as third param
 			classJournal = new Journal(args[2], args[3]);
 			transformer = new OndemandTransformer(args[1], classJournal);
 			inst.addTransformer(transformer, true);
 			transformer.retransformExistingClasses();
+            dataPlaneWriter = createDataPlane(args[4]);
 		} else {
 			throw new RuntimeException("Did not understand the passed profiling cmd " + cmd);
 		}
@@ -177,12 +183,15 @@ public class Agent {
 		if (classJournal != null) {
 			classJournal.close();
 		}
+
+        destroyDataPlane();
 	}
 
 	private void writeAllEntries(OutputStreamWriter writer) throws Exception {
         // update the last time someone pulled profiling information from me
         lastPullTime = System.currentTimeMillis();
         Object entry = null;
+        writer.write(MAGIC_STRING);
         while(((entry = entryQueue.poll())!=null) && ((System.currentTimeMillis() - lastPullTime) < 200)) {
             String[] currEntries = (String[]) entry;
 			for (String currEntry : currEntries) {
@@ -191,8 +200,25 @@ public class Agent {
 			}
 			writer.write("\n");
         }
+        writer.write(MAGIC_STRING);
 		writer.flush();
 	}
+
+    private OutputStreamWriter createDataPlane(String portNumber) throws IOException {
+        dataPlaneSocket = new Socket(InetAddress.getLocalHost(), Integer.parseInt(portNumber));
+		System.out.println("Now connected to the data plane");
+		OutputStream os = dataPlaneSocket.getOutputStream();
+		return new OutputStreamWriter(os);
+    }
+
+    private void destroyDataPlane() throws IOException {
+        if (dataPlaneWriter != null) {
+            dataPlaneWriter.close();
+            dataPlaneSocket.close();
+            dataPlaneWriter = null;
+            dataPlaneSocket = null;
+        }
+    }
 
 	private class OndemandTransformer implements ClassFileTransformer {
 		private Pattern classPattern;
