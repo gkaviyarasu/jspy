@@ -1,5 +1,7 @@
 define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/treeRenderer", "app/datasource"], function($, eventBus, renderer, commandManager, treeRenderer, ds){
     var keepProfiling = false;
+    var lastSegment = "";
+    var rowDelimiter = "~#";
 
     renderer.registerRenderer("tree", treeRenderer.render);
     commandManager
@@ -35,9 +37,11 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
         var currCmd = renderer.getCommand();
         var profilerActionSelector;
         if (currCmd == "getClassLocations") {
-            renderer.getMainSection(".data .level1 li span").before(function(){return "<input type='checkbox' class='node-selector'></input>";});
-            profilerActionSelector = renderProfilerAction();
-            addProfilerEventHandler(profilerActionSelector);
+            if ($(".node-selector").length === 0) {
+                renderer.getMainSection(".data .level1 li span").before(function(){return "<input type='checkbox' class='node-selector'></input>";});
+                profilerActionSelector = renderProfilerAction();
+                addProfilerEventHandler(profilerActionSelector);
+            }
         }
     });
 
@@ -61,16 +65,19 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
     });
 
     eventBus.on('updateProfiledResults', function(event) {
-        commandManager
-            .runCommand('getProfiledResults')
-            .onSuccess(function(data) {
-                eventBus.emit('displayProfiledResults', data);
-            })
-            .onFailure(function(data) {
-                renderer.showHelp("No data yet from the profiler, continuing the profiling");
-            });
         if (keepProfiling) {
-            setTimeout(function(){eventBus.emit('updateProfiledResults');}, 5000);
+            commandManager
+                .runCommand('getProfiledResults')
+                .onSuccess(function(data) {
+                    eventBus.emit('displayProfiledResults', data);
+                })
+                .onFailure(function(data) {
+                    renderer.showHelp("No data yet from the profiler, continuing the profiling");
+                });
+            // double check as it is possible that we changed in between 
+            if (keepProfiling) {
+                setTimeout(function(){eventBus.emit('updateProfiledResults');}, 5000);
+            }
         }
     });
 
@@ -79,12 +86,24 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
     eventBus.on('displayProfiledResults', function(event) {
         var profiledData = event.detail;
         var dataActionSelector = null;
+        var dataToCrunch = "";
+        var splits;
         if (keepProfiling) {
             profiledData = (profiledData)? profiledData.response: null;
-            if (profiledData && profiledData.length > 80) {
-                dataActionSelector = createDataSection();
-                renderer.getMainSection(dataActionSelector).text(profiledData.split("~#").join("\n") + renderer.getMainSection(dataActionSelector).text());
-                //treeRenderer.render("body > .ui-layout-center > .data .data-profiler", createTree(profiledData));
+            if (profiledData) {
+                dataToCrunch = lastSegment + profiledData;
+                splits = dataToCrunch.split("~#");
+                if (splits && splits.length > 0) {
+                    if (isLastSegmentInValid(profiledData)) {
+                        lastSegment = splits[splits.length - 1];
+                        splits.splice(-1,1);
+                    } else {
+                        lastSegment = "";
+                    }
+                    dataActionSelector = createDataSection();
+                    // renderer.getMainSection(dataActionSelector).text(profiledData.split("~#").join("\n") + renderer.getMainSection(dataActfrionSelector).text());
+                    renderer.render("body > .ui-layout-center > .data", createTree(splits), "tree");
+                }
             }
         }
     });
@@ -92,15 +111,20 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
     eventBus.on('forceKeepProfiling', function() {keepProfiling = true});
 
     function createDataSection() {
-        if (renderer.getMainSection(".data .data-profiler").length === 0) {
-            renderer.getMainSection(".data").append("<pre class='data-profiler'></pre>");
+        if (renderer.getMainSection(".data .data").length === 0) {
+            renderer.getMainSection(".data").append("<div class='data'></div>");
         }
-        return ".data .data-profiler";
+        return ".data";
     }
     function renderProfilerAction() {
         var profilerActionId = 'profilingAction';
         renderer.getMainSection(".data").append("<button class='btn btn-primary' id='"+profilerActionId+"' type='button'>Start Profiling</button>");
         return "#"+profilerActionId;
+    }
+
+    function isLastSegmentInValid(segments) {
+        var length = segments.length;
+        return !((segments.charAt(length - 2) == rowDelimiter.charAt(0) ) && (segments.charAt(length - 1) == rowDelimiter.charAt(1)));
     }
 
     function addProfilerEventHandler(selector) {
@@ -127,9 +151,9 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
         });
     }
 
-    function createTree(data) {
+    // converts [s,e,s,s,e,s] to a tree (s is start and e is end)
+    function createTree(entries) {
         var parser = /(\d*) (\d*) (start|end) (\S*) (\S*)/;
-        var entries = data.split("~#");
         var splits = null;
         var i = 0;
         var root = new Node("Trace of all invoked methods");
@@ -147,32 +171,53 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
     }
 
     function processNode(parentChain, splits) {
-        var tId, threadParent;
+        var tId, threadStack, lastNode;
+        tId = splits[1];
         if (splits[3] === "start") {
             var entry = new Node("child", splits);
-            threadParent = parentChain[entry.tId];
-            if (threadParent) {
-                console.log("already has a thread parent for "+entry.tId);
-            } else {
-                threadParent = [];
-                threadParent.push(new Node("Thread "+entry.tId));
-                parentChain[entry.tId] = threadParent;
+            threadStack = parentChain[tId];
+            if (threadStack == null) {
+                threadStack = createThreadStack(parentChain, tId);
             }
-            threadParent[threadParent.length - 1].addChild(entry);
-            threadParent.push(entry);
+            threadStack[threadStack.length - 1].addChild(entry);
+            threadStack.push(entry);
         } else {
-            threadParent = parentChain[splits[1]];
-            if (threadParent) {
-                // mark it as end of last entry for this thread and pop it from parent chain
-                threadParent[threadParent.length - 1].completed =true ;
-                // in case there are no children except thread name don't pop it
-                if (threadParent.length > 1) {
-                    threadParent.splice(-1, 1);
+            threadStack = parentChain[tId];
+            if (threadStack) {
+                lastNode = threadStack[threadStack.length - 1];
+                if (threadStack.length > 1) {
+                    lastNode.completed = true;
+                    lastNode.totalTime = splits[2] - lastNode.tstamp;
+                    // move stack one level up
+                    threadStack.splice(-1, 1);
+                } else {
+                    // last frame in stack, so this is a end that does not have a start in the current data (i.e [s,e,e])
+                    var entry = new Node("child", splits);
+                    entry.needsMerge = true;
+                    // move all children of frame to this node
+                    entry.children = lastNode.children;
+                    lastNode.children = [entry];
                 }
             } else {
-                console.log("Tree may be in bad state, no start for "+JSON.stringify(splits));
+                // no stack for this thread id
+                threadStack = createThreadStack(parentChain, tId);
+                var entry = createMergeMeNode(splits);
+                threadStack[threadStack.length - 1].addChild(entry);
             }
         }
+    }
+
+    function createThreadStack(parentChain, threadId) {
+        var threadStack = [];
+        threadStack.push(new Node("Thread "+threadId));
+        parentChain[threadId] = threadStack;
+        return threadStack;
+    }
+
+    function createMergeMeNode(splits) {
+        var entry = new Node("child", splits);
+        entry.needsMerge = true;
+        return entry;
     }
 
     function Node(name, splits) {
@@ -188,12 +233,14 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
         }
         this.children = [];
         this.completed = false;
+        this.needsMerge = false;
         this.addChild = function(entry) {
             this.children.push(entry);
         };
         this.toString = function() {
             return this.tId + "->" + this.methodName;
         };
+        this.totalTime = -1;
     }
 
     function meToString(d, mDepth, cDepth) {

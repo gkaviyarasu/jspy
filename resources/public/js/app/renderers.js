@@ -58,8 +58,8 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
         renderMain: function(data) {
             return this.render("body > .ui-layout-center", data);
         },
-        render : function(where, data, renderer) {
-            renderer = renderer || renderDefault; 
+        render : function(where, data, rendererName) {
+            var renderer = rendererRegistry[rendererName] || renderDefault; 
             renderer.call(this, where + " > .data", data);
             var returnVal= {
                 addHandler: function(eventName, eventHandler) {

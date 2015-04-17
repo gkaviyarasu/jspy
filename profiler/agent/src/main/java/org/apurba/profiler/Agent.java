@@ -129,10 +129,9 @@ public class Agent {
 				} else if (expr.startsWith(STOP_PROFILING_CMD)) {
 					stopProfiling();
 				} else if (expr.startsWith(GET_ALL_ENTRIES)) {
+                    // there are chances that data plane is not yet open or has been closed, so do a null check, throwing exception will have been good, but we do not want to contaminate the host program log
                     if (dataPlaneWriter != null) {
                         writeAllEntries(dataPlaneWriter);
-                    } else {
-                        throw new IllegalStateException("Data Plane not set, check the order of commands");
                     }
 				} else {
 					Object obj = engine.eval(expr);
@@ -348,7 +347,9 @@ public class Agent {
 			// FIXME non-standard way of cleaning dataBuffer
 			if (dataBuffer instanceof DirectBuffer) {
 				sun.misc.Cleaner cleaner = ((DirectBuffer) dataBuffer).cleaner();
-				cleaner.clean();
+                if (cleaner) {
+                    cleaner.clean();
+                }
 			}
 		}
 	}
