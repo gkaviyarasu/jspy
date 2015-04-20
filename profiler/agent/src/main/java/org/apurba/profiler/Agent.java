@@ -347,7 +347,7 @@ public class Agent {
 			// FIXME non-standard way of cleaning dataBuffer
 			if (dataBuffer instanceof DirectBuffer) {
 				sun.misc.Cleaner cleaner = ((DirectBuffer) dataBuffer).cleaner();
-                if (cleaner) {
+                if (cleaner != null) {
                     cleaner.clean();
                 }
 			}
