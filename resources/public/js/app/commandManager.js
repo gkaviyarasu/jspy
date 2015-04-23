@@ -3,16 +3,26 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
     var currentVM = null;
     var commandRegistry = {};
 
-    function CommandResult(promise) {
+    function CommandResult(cmdName, param, promise) {
         return {
+            cmdName : cmdName,
+            param : param || "",
             promise : promise,
             onSuccess: function(callBack) {
-                this.promise.then(callBack, null);
+                var self = this;
+                this.promise.then(function(data) {
+                    self.data = data;
+                    eventBus.emit("commandCompleted", self);
+                    callBack(data)
+                }, null);
                 return this;
             },
             onFailure: function(callBack) {
                 this.promise.then(null, this.callBack);
                 return this;
+            },
+            toString: function() {
+                return cmdName + " [" + param + "] at " +Date.now();
             }
         };
     }
@@ -22,7 +32,7 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
         var vmId = currentVM;
         var cmd = commandRegistry[cmdName];
         if (cmd) {
-            return new CommandResult(cmd.operation.call(this, param, vmId));
+            return new CommandResult(cmdName, param, cmd.operation.call(this, param, vmId));
         } else {
             throw new Error("Command name " +cmdName+" not recognized");
         }

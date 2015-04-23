@@ -9,7 +9,7 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
     }
 
     function renderDefault(selector, data) {
-        $(selector).JSONView(data);
+        $(selector).JSONView((data.response)? data.response:data);
     }
 
     function renderCommands(commands) {

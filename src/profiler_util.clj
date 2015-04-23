@@ -1,3 +1,4 @@
+;;;; Utilities needed for enhancing classes and debugging
 (ns profiler-util
   (:use [enhance-class]
         [class-util])

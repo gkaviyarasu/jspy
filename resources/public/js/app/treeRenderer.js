@@ -135,7 +135,7 @@ define(["d3"], function(d3) {
             deltaNode = deltaChain[i];
             origNode = originalChain[i];
             origNodeChildren = (origNode.children)? origNode.children:origNode._children;
-            origNodeChildren.push.apply(origNode.children, getNonMergingChildren(deltaNode.children));
+            origNodeChildren.push.apply(origNodeChildren, getNonMergingChildren(deltaNode.children));
             origNode.totalTime = deltaNode.tstamp - origNode.tstamp;
             origNode.completed = true;
         }

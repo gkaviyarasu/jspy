@@ -4,9 +4,15 @@
   (:import 
    [sun.tools.jps Arguments Jps]
    [sun.jvmstat.monitor HostIdentifier MonitoredHost VmIdentifier MonitoredVmUtil]
-   [com.sun.tools.attach VirtualMachine AttachNotSupportedException VirtualMachineDescriptor]))
+   [com.sun.tools.attach VirtualMachine AttachNotSupportedException VirtualMachineDescriptor]
+   [java.io File BufferedReader])
+  (:require [clojure.java.io :as io]))
 
 (def attachedVmManager (atom {}))
+
+(def log-response-writer (atom nil))
+
+(def log-response-reader (atom nil))
 
 (defn- register-attached-vm [vmId profiledVm]
     (swap! attachedVmManager assoc vmId profiledVm))
@@ -14,7 +20,42 @@
 (defn- deregister-attached-vm [vmId]
     (swap! attachedVmManager dissoc vmId))
 
+(defn- log-to-file [message]
+  (if-not (nil? @log-response-writer) 
+    (do 
+      (.write @log-response-writer (str message "\n"))
+      (.flush @log-response-writer)))
+  message)
+
+(defn- open-response-logger[]
+  (let [responseLog (File/createTempFile "response" "blob")]
+    (do 
+      (print (.getAbsolutePath responseLog))
+      (io/writer responseLog))))
+
+(defn- close-resource [resource]
+  (.close resource))
+
+(defn- open-response-reader [fileName]
+  (BufferedReader. (io/reader fileName)))
+
+(defn- playback-from-history []
+  (.readLine @log-response-reader))
+
 (defn get-profiler [vmId] (:profiler (get @attachedVmManager vmId)))
+
+(defn- enhance-for-replay [vmId]
+  (if-not (nil? @log-response-reader)
+    (playback-from-history)
+    (if-not (nil? (get-profiler vmId))
+      (log-to-file 
+       (let [responseStr (.get-profiler-result (get-profiler vmId))]
+         (str 
+          "{\"timestamp\":" (System/currentTimeMillis) 
+          ", \"response\":\"" (if-not (nil? responseStr) 
+                                responseStr "") "\"}")))
+      (str "{\"timestamp\":" (System/currentTimeMillis) 
+          ", \"response\":\"No profiler attached for the given vmId\"}"))))
 
 (defrecord VM [id mainClass args flags])
 
@@ -57,14 +98,16 @@
   (.run-command (get-profiler vmId) command))
 
 (defn get-result-from-vm [^String vmId]
-  (if-not (nil? (get-profiler vmId))
-    (.get-result (get-profiler vmId))
-    (str "{\"response\":\"No profiler attached for the given vmId\"}")))
+  (str "{\"timestamp\":" (System/currentTimeMillis) 
+       ",\"response\": "
+       (if-not (nil? (get-profiler vmId))
+         (.get-result (get-profiler vmId))
+          "\"No profiler attached for the given vmId\"")
+       "}"))
 
 (defn get-raw-result-from-vm [^String vmId]
-  (if-not (nil? (get-profiler vmId))
-    (.get-profiler-result (get-profiler vmId))
-    (str "{\"response\":\"No profiler attached for the given vmId\"}")))
+    (enhance-for-replay vmId))
+    
 
 (defn profile-vm [^String vmId fileNames]
   (.profile-locations (get-profiler vmId) fileNames))
@@ -81,3 +124,26 @@
   "utility method to get the profiled vms in shell"
   []
   attachedVmManager)
+
+(defn toggle-response-logging
+  "Toggle on or off profiling reponses logging"
+  []
+      (reset! log-response-writer
+              (if (nil? @log-response-writer)
+                (open-response-logger)
+                (do 
+                  (close-resource @log-response-writer)
+                  nil))))
+
+
+
+(defn toggle-response-replay 
+  "toggles sending captured entries from src file as raw responses"
+  [srcFileName]
+  (reset! log-response-reader
+          (if (nil? @log-response-reader)
+            (open-response-reader srcFileName)
+            (do
+              (close-resource @log-response-reader)
+              nil))))
+

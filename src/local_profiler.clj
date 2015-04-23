@@ -204,8 +204,7 @@
   (get-profiler-result [this]
     (let [resultTillNow (combine-all dataPlaneQ)]
       (if (nil? resultTillNow) nil 
-          (let [goodResp (str "{\"response\":\"" resultTillNow "\"}")]
-            (clojure.string/replace goodResp #"\n" "~#")))))
+          (clojure.string/replace resultTillNow #"\n" "~#"))))
 
   (get-port [this] (.getLocalPort socket)))
 

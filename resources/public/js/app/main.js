@@ -1,4 +1,4 @@
-define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler"], function($, renderer, commandManager, eventBus, profiler) {
+define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler", "app/historyManager"], function($, renderer, commandManager, eventBus, profiler, historyManager) {
 
     var showHelp = renderer.showHelp;
     var keepProfiling = false;
