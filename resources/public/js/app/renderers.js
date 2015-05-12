@@ -50,13 +50,26 @@ define(["jquery", "jquery-jsonview", "app/eventBus"], function($, noMeaning, eve
         rendererRegistry[name] = callback;
     }
 
+    function linkListRenderer(location, data) {
+        var rootElement = $(location);
+        var i, element;
+        rootElement.append('<div class="header">[0]</div><br/><br/>'.format(data.listName));
+        for (i = 0; i < data.elements.length; i++) {
+            element = data.elements[i];
+            rootElement.append('<a href="[0]" style="padding-left:10px">[1]</a><br/><br/>'.format(element.href, element.display));
+        }
+            
+    }
+
+    rendererRegistry["linkListRenderer"] = linkListRenderer;
+
     return {
         "registerRenderer" : registerRenderer,
-        renderView: function(data) {
-            return this.render("body > .ui-layout-west", data);
+        renderView: function(data, rendererName) {
+            return this.render("body > .ui-layout-west", data, rendererName);
         },
-        renderMain: function(data) {
-            return this.render("body > .ui-layout-center", data);
+        renderMain: function(data, rendererName) {
+            return this.render("body > .ui-layout-center", data, rendererName);
         },
         render : function(where, data, rendererName) {
             var renderer = rendererRegistry[rendererName] || renderDefault; 

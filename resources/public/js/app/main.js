@@ -1,7 +1,17 @@
-define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler", "app/historyManager"], function($, renderer, commandManager, eventBus, profiler, historyManager) {
+define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler", "app/historyManager", "app/lightTrace"], function($, renderer, commandManager, eventBus, profiler, historyManager, lightTrace) {
 
     var showHelp = renderer.showHelp;
     var keepProfiling = false;
+
+    if (typeof String.prototype.format !== 'function') {
+        String.prototype.format = function() {
+            var formatted = this, i;
+            for (i = 0; i < arguments.length; i++) {
+                formatted = formatted.replace("[" + i + "]", arguments[i]);
+            }
+            return formatted;
+        };
+    }
 
     function getHelpDisplayer(msg) {
         return function(){
@@ -12,7 +22,7 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
     function attachToVM(event) {
         var vmId, errMsg = 'please click on the vm id value';
         try{ 
-            vmId = parseInt($(event.target).text()); 
+            vmId = parseInt($(event.target).attr("href"));
             if (vmId) {
                 showHelp("Trying to attach to vm, will show active functions on connect");
                 commandManager
@@ -42,6 +52,14 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
             });
     }
 
+    function transformToReadableVMList(data) {
+        var transformed = {'listName':'List of running VMs', 'elements':[]};
+        var i = 0;
+        for (i ; i < data.length; i++) {
+            transformed.elements.push({'href':data[i].id, 'display':'[0] ([1])'.format(data[i].mainClass, data[i].id)});
+        }
+        return transformed;
+    }
 
     $(function() {
 	    var pageLayout = $('body').layout({
@@ -68,7 +86,7 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
                 .runCommand("listVMs")
                 .onSuccess(function(data) {
                     renderer
-                        .renderView(data)
+                        .renderView(transformToReadableVMList(data), "linkListRenderer")
                         .addHandler('click', attachToVM);
                 });
             updateAttachedVMList();

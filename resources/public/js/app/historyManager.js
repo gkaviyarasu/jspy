@@ -1,5 +1,6 @@
 define(["app/eventBus", "app/commandManager", "app/renderers"], function(eventBus, commandManager, renderer){
-    var lastNQ = (function () {
+    // lruList stores the last 10 command results
+    var lruList = (function () {
         var marker = -1;
         var holder = {};
         var size = 10;
@@ -23,12 +24,13 @@ define(["app/eventBus", "app/commandManager", "app/renderers"], function(eventBu
     }());
 
     eventBus.on("commandCompleted", function(commandResult) {
-        lastNQ.put(commandResult.detail);
+        lruList.put(commandResult.detail);
     });
+
     commandManager
         .registerCommand("showHistory",
                          function showHistory(fulfill, reject, doesNotMatter, vmId) {
-                             var entries = lastNQ.getAll();
+                             var entries = lruList.getAll();
                              var cleanEntries = [];
                              var i = 0;
                              var entry;

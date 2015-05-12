@@ -27,7 +27,7 @@ define(["promise", "jquery"], function(Promise, $) {
             .fail(function(jqXHR, textStatus, errorThrown) {
                 var retryCounter = promiseHolder.retryCounter;
                 retryCounter = (retryCounter)? retryCounter + 1 : 1;
-                if (retryCounter < 4) {
+                if (retryCounter < 5) {
                     setTimeout(retryingFetch, 300 * retryCounter * retryCounter, url, data,httpVerb, promiseHolder);
                 } else {
                     promiseHolder.reject(errorThrown);

@@ -101,7 +101,6 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
                         lastSegment = "";
                     }
                     dataActionSelector = createDataSection();
-                    // renderer.getMainSection(dataActionSelector).text(profiledData.split("~#").join("\n") + renderer.getMainSection(dataActfrionSelector).text());
                     renderer.render("body > .ui-layout-center > .data", createTree(splits), "tree");
                 }
             }

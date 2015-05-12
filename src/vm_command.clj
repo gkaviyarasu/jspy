@@ -47,17 +47,15 @@
 (defn- enhance-for-replay [vmId]
   (if-not (nil? @log-response-reader)
     (playback-from-history)
+    (str "{\"timestamp\":" (System/currentTimeMillis) 
+         ", \"response\":\""
     (if-not (nil? (get-profiler vmId))
       (log-to-file 
        (let [responseStr (.get-profiler-result (get-profiler vmId))]
-         (str 
-          "{\"timestamp\":" (System/currentTimeMillis) 
-          ", \"response\":\"" (if-not (nil? responseStr) 
-                                responseStr "") "\"}")))
-      (str "{\"timestamp\":" (System/currentTimeMillis) 
-          ", \"response\":\"No profiler attached for the given vmId\"}"))))
+         (if-not (nil? responseStr) responseStr "")))
+      "No profiler attached for the given vmId") "\"}")))
 
-(defrecord VM [id mainClass args flags])
+(defrecord VM [id mainClass args flags commandLine])
 
 (defn list-vms 
   "lists all vms running on localhost"
@@ -71,7 +69,8 @@
                 (VM. vmid 
                      (MonitoredVmUtil/mainClass vm true) 
                      (MonitoredVmUtil/jvmArgs vm) 
-                     (MonitoredVmUtil/jvmFlags vm))))
+                     (MonitoredVmUtil/jvmFlags vm)
+                     (MonitoredVmUtil/commandLine vm))))
             activeVMs))))
 
 
