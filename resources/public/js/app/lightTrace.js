@@ -11,7 +11,7 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/da
                 eventBus.emit('displaySampleDelta', data);
             });
         if (sampleTraces) {
-            setTimeout(function(){eventBus.emit('sampleThreadDumps');}, 2000);
+            setTimeout(function(){eventBus.emit('sampleThreadDumps');}, 1500);
         }
     });
 
@@ -29,7 +29,6 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/da
 
     eventBus.on("displaySampleDelta", function(event) {
         var data = transform(groupThreads(event.detail.response));
-        console.log(JSON.stringify(data));
         renderer.renderMain(data, "threadView");
     });
 
@@ -53,6 +52,7 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/da
                     if (oldThread) {
                         if (oldThread.topStack.indexOf(newThread.topStack) == -1) {
                             newThread.topStack += " " + oldThread.topStack;
+                            newThread.showsActivity = true;
                         }
                     }
                 }
@@ -96,12 +96,22 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/da
             if (data[threadGroup].length == 1) {
                 groupElement.names.push(data[threadGroup][0].name);
                 groupElement.stacks.push(data[threadGroup][0].topStack.split(") "));
+                groupElement.recentlyChanged = data[threadGroup][0].showsActivity;
             } else {
                 groupElement.names = extractNames(data[threadGroup]);
                 groupElement.stacks.push(threadGroup.split(") "));
             }
             d3Data.push(groupElement);
         }
+        d3Data.sort(function(obj1, obj2) {
+            if (obj1.recentlyChanged) {
+                return 1;
+            } else if (obj2.recentlyChanged) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
         return d3Data;
     }
 
@@ -185,8 +195,8 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/da
                 var i, txtNode, j;
                 for (i = 0; i < stacks.length; i++) {
                     for (j = 0; j < stacks[i].length; j++) {
-                        d3.select(this).append("rect").attr("y", Math.ceil(i) * margins.tNameGapY - 15).attr("x", (((j % 3) + 0.95) * (margins.stackNameGap + margins.stackNameWidth))).attr("height", 20).style("fill", "grey").attr("width", margins.stackNameWidth);
-                        txtNode = d3.select(this).append("text").append("tspan").text(extractMethodName(stacks[i][j])).attr("x", (((j % 3) + 1) * (margins.stackNameGap + margins.stackNameWidth))).attr("y", Math.ceil(i) * margins.tNameGapY).each(wrap);
+                        d3.select(this).append("rect").attr("y", Math.floor(j/3) * margins.tNameGapY - 15).attr("x", (((j % 3) + 0.95) * (margins.stackNameGap + margins.stackNameWidth))).attr("height", 20).style("fill", "grey").attr("width", margins.stackNameWidth);
+                        txtNode = d3.select(this).append("text").append("tspan").text(extractMethodName(stacks[i][j])).attr("x", (((j % 3) + 1) * (margins.stackNameGap + margins.stackNameWidth))).attr("y", Math.floor(j/3) * margins.tNameGapY).each(wrap);
                     }
                 }
             });
