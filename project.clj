@@ -21,6 +21,5 @@
              ;; "-Xdebug"
              ;; "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
              ]
-  :java-source-path "test-java"
   :extra-classpath-dirs ~tools-home
   :resource-paths    ~lein2hack )

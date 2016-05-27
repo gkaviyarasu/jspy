@@ -1,6 +1,0 @@
-(def few-nodes  (take 10 (data)))
-(def few-method-tree (thread-grouped-method-tree few-nodes))
-(count (filter (fn [node] (instance? MethodEntryNode node)) (data)))
-
-curl -X POST --data '{"port":"5555"}' http://localhost:8585/start --header "Content-Type:application/json"
-

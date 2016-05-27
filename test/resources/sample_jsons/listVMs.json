@@ -1,0 +1,20 @@
+[
+    {
+        "args": "-Xbootclasspath/a:/home/apurba/.lein/self-installs/leiningen-2.3.4-standalone.jar -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dfile.encoding=UTF-8 -Dmaven.wagon.http.ssl.easy=false -Dleiningen.original.pwd=/data/work/ss-git/java/jspy -Dleiningen.script=/data/work/ss-git/experiments/clojure/lein",
+        "flags": "",
+        "id": 24451,
+        "mainClass": "clojure.main"
+    },
+    {
+        "args": "-Xss5m -Dclojure.compile.path=/data/work/ss-git/java/jspy/target/classes -Dspy.version=1.0.0-SNAPSHOT -Dfile.encoding=UTF-8 -Dclojure.debug=false",
+        "flags": "",
+        "id": 24471,
+        "mainClass": "clojure.main"
+    },
+    {
+        "args": "-Djava.util.logging.config.file=/data/apps/apache-tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Xmx2048M -Xms1024m -Xmx2048m -XX:NewSize=256m -XX:MaxNewSize=256m -XX:PermSize=256m -XX:MaxPermSize=512m -XX:+DisableExplicitGC -agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n -Djava.endorsed.dirs=/data/apps/apache-tomcat/endorsed -Dcatalina.base=/data/apps/apache-tomcat -Dcatalina.home=/data/apps/apache-tomcat -Djava.io.tmpdir=/data/apps/apache-tomcat/temp",
+        "flags": "",
+        "id": 23608,
+        "mainClass": "org.apache.catalina.startup.Bootstrap"
+    }
+]
