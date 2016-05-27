@@ -1,4 +1,4 @@
-define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler", "app/historyManager", "app/lightTrace"], function($, renderer, commandManager, eventBus, profiler, historyManager, lightTrace) {
+define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-layout", "jquery-jsonview", "app/profiler", "app/historyManager", "app/lightTrace", "app/settings"], function($, renderer, commandManager, eventBus, profiler, historyManager, lightTrace, settings) {
 
     var showHelp = renderer.showHelp;
     var keepProfiling = false;
@@ -12,6 +12,10 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
             return formatted;
         };
     }
+
+
+    eventBus.emit("appStarting");
+    var transformer = require("app/transformer");
 
     function getHelpDisplayer(msg) {
         return function(){
@@ -124,6 +128,7 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
             eventBus.emit('vmChanged', vmId);
         });
 
+        transformer.register("dumpThreadNames", function(data) {return data.response.sort()});
         eventBus.emit("appStarted");
         
     });

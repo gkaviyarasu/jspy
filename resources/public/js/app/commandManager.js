@@ -1,4 +1,4 @@
-define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, eventBus){
+define(["app/datasource", "promise", "app/eventBus", "app/transformer"], function(ds, Promise, eventBus, transformer){
     var currentlyAttaching = false;
     var currentVM = null;
     var commandRegistry = {};
@@ -11,7 +11,8 @@ define(["app/datasource", "promise", "app/eventBus"], function(ds, Promise, even
             onSuccess: function(callBack) {
                 var self = this;
                 this.promise.then(function(data) {
-                    self.data = data;
+                    
+                    self.data = transformer.transform(cmdName, data);
                     eventBus.emit("commandCompleted", self);
                     callBack(data)
                 }, null);

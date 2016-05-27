@@ -1,4 +1,5 @@
 define(["promise", "jquery"], function(Promise, $) {
+
     function rawFetch(url, data, httpVerb, promiseHolder) {
         return $.ajax({
             beforeSend: function(xhrObj){
@@ -10,8 +11,8 @@ define(["promise", "jquery"], function(Promise, $) {
             processData: false,
             data: (data)? JSON.stringify(data):null, 
             dataType: "json"
-        }).done(function(data){
-            promiseHolder.fulfill(data);
+        }).done(function(responseData){
+            promiseHolder.fulfill(responseData);
         });        
     }
 

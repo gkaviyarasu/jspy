@@ -117,9 +117,11 @@ function dumpThreads() {
 function forEach(arr, fn) { 
     var results= [];   
     var i = 0; 
-    for (; i < arr.length; i++){ 
-        results.push(fn.call(this,arr[i]));
-    } 
+    if (arr) {
+        for (; i < arr.length; i++){ 
+            results.push(fn.call(this,arr[i]));
+        } 
+    }
     return results;
 }
 
