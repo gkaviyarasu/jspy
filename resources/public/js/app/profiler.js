@@ -138,7 +138,6 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
                     classLocations.push($(this).next('span').text().replace(/"/g,'').replace("file:",""));
                 });
                 renderer.getMainSection(".tree .pathTree li input:checkbox:checked").each(function(){
-                    console.log("$(this).val()", $(this).val());
                     classLocations.push($(this).val().replace(/"/g,'').replace("file:",""));
                 });
                 
