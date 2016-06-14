@@ -27,6 +27,8 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
         var vmId, errMsg = 'please click on the vm id value';
         try{ 
             vmId = parseInt($(event.target).attr("href"));
+            $(".ui-layout-west a.active").removeClass("active");
+            $(event.target).addClass("active");
             if (vmId) {
                 showHelp("Trying to attach to vm, will show active functions on connect");
                 commandManager
@@ -66,18 +68,18 @@ define(["jquery", "app/renderers", "app/commandManager", "app/eventBus","jquery-
     }
 
     $(function() {
-	    var pageLayout = $('body').layout({
-		    resizeWhileDragging	: true,
-		    north__slidable : false,
-		    north__resizable : false,
-		    north__spacing_open:0,
-		    north__closable : false,
-		    west__size:	"25%",
-		    west__initClosed : false,
-		    onresize : function(){
-			    resetSectionSize();
-		    }
-	    });
+        var pageLayout = $('body').layout({
+            resizeWhileDragging : true,
+            north__slidable : false,
+            north__resizable : false,
+            north__spacing_open:0,
+            north__closable : false,
+            west__size: "25%",
+            west__initClosed : false,
+            onresize : function(){
+                resetSectionSize();
+            }
+        });
 
         eventBus.setDelegate($('body')[0]);
 

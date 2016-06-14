@@ -137,6 +137,10 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
                 renderer.getMainSection(".level1 li input:checkbox:checked").each(function(){
                     classLocations.push($(this).next('span').text().replace(/"/g,'').replace("file:",""));
                 });
+                renderer.getMainSection(".tree .pathTree li input:checkbox:checked").each(function(){
+                    console.log("$(this).val()", $(this).val());
+                    classLocations.push($(this).val().replace(/"/g,'').replace("file:",""));
+                });
                 
                 if (classLocations.length > 0) {
                     eventBus.emit("startProfiling", classLocations);
