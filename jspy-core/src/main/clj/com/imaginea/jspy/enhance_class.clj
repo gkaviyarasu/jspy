@@ -1,6 +1,6 @@
 (ns ^{:doc "Byte code magic to add entry exit methods"
        :author "Apurba Nath"}
-  enhance-class
+  com.imaginea.jspy.enhance-class
   (import [clojure.asm ClassReader ClassVisitor ClassWriter Opcodes MethodVisitor]))
 
 (defrecord InstrumentedClass [name bytes])
@@ -16,91 +16,91 @@
 
 
 (defn create-perf-adding-method-visitor [delegate class-name method-name]
-  (reify MethodVisitor
-    (visitInsn [this inst]
+  (proxy [MethodVisitor] [Opcodes/ASM4 delegate]
+    (visitInsn [ inst]
       (do 
         ;; FIXME use switch this is ugly
         ;; miss cglib magic, this is stupid code
         (if (or (= inst Opcodes/ARETURN) (= inst Opcodes/DRETURN) (= inst  Opcodes/FRETURN) (= inst  Opcodes/IRETURN) (= inst  Opcodes/LRETURN) (= inst  Opcodes/RETURN) (= inst Opcodes/ATHROW)) 
           (add-entry-exit-code "end" this class-name method-name)))
       (.visitInsn delegate inst))
-    (visitCode [this]
+    (visitCode []
       (do 
         (add-entry-exit-code "start" this class-name method-name)
         (.visitCode delegate)))
-    (visitAnnotationDefault [this]
+    (visitAnnotationDefault []
       (.visitAnnotationDefault delegate))
-    (visitAnnotation [this desc visible]
+    (visitAnnotation [ desc visible]
       (.visitAnnotation delegate desc visible))
-    (visitParameterAnnotation [this parameter desc visible]
+    (visitParameterAnnotation [ parameter desc visible]
       (.visitParameterAnnotation delegate parameter desc visible))
-    (visitAttribute [this attr]
+    (visitAttribute [ attr]
       (.visitAttribute delegate attr))
-    (visitFrame [this type nLocal local nStack stack]
+    (visitFrame [ type nLocal local nStack stack]
       (.visitFrame delegate type nLocal local nStack stack))
-    (visitIntInsn [this opcode operand]
+    (visitIntInsn [ opcode operand]
       (.visitIntInsn delegate opcode operand))
-    (visitVarInsn [this opcode var]
+    (visitVarInsn [ opcode var]
       (.visitVarInsn delegate opcode var))
-    (visitTypeInsn [this opcode type]
+    (visitTypeInsn [ opcode type]
       (.visitTypeInsn delegate opcode type))
-    (visitFieldInsn [this opcode owner name desc]
+    (visitFieldInsn [ opcode owner name desc]
       (.visitFieldInsn delegate opcode owner name desc))
-    (visitMethodInsn [this opcode owner name desc]
+    (visitMethodInsn [ opcode owner name desc]
       (.visitMethodInsn delegate opcode owner name desc))
-    (visitJumpInsn [this opcode label]
+    (visitJumpInsn [ opcode label]
       (.visitJumpInsn delegate opcode label))
-    (visitLabel [this label]
+    (visitLabel [ label]
       (.visitLabel delegate label))
-    (visitLdcInsn [this cst]
+    (visitLdcInsn [ cst]
       (.visitLdcInsn delegate cst))
-    (visitIincInsn [this var increment]
+    (visitIincInsn [ var increment]
       (.visitIincInsn delegate var increment))
-    (visitTableSwitchInsn [this min max dflt labels]
+    (visitTableSwitchInsn [ min max dflt labels]
       (.visitTableSwitchInsn delegate min max dflt labels))
-    (visitLookupSwitchInsn [this dflt keys labels]
+    (visitLookupSwitchInsn [ dflt keys labels]
       (.visitLookupSwitchInsn delegate dflt keys labels))
-    (visitMultiANewArrayInsn [this desc dims]
+    (visitMultiANewArrayInsn [ desc dims]
       (.visitMultiANewArrayInsn delegate desc dims))
-    (visitTryCatchBlock [this start end handler type]
+    (visitTryCatchBlock [ start end handler type]
       (.visitTryCatchBlock delegate start end handler type))
-    (visitLocalVariable [this name desc signature start end index]
+    (visitLocalVariable [ name desc signature start end index]
       (.visitLocalVariable delegate name desc signature start end index))
-    (visitLineNumber [this line start]
+    (visitLineNumber [ line start]
       (.visitLineNumber delegate line start))
-    (visitMaxs [this maxstack maxLocals]
+    (visitMaxs [ maxstack maxLocals]
       (.visitMaxs delegate maxstack maxLocals))
-    (visitEnd [this]
+    (visitEnd []
       (.visitEnd delegate))
 ))
 
 ;; visitMethod and visit are the only interesting methods
 (defn create-perf-adding-class-visitor[delegate]
-  (reify ClassVisitor 
-    (visit [this version access name desc singature exceptions]
+  (proxy [ClassVisitor] [Opcodes/ASM4 delegate]
+    (visit [ version access name signature superName interfaces]
       (do 
         (reset! curr-class-name name)
-        (.visit delegate  version access name desc singature exceptions)))
-    (visitMethod [this access method-name desc singature exceptions] 
+        (.visit delegate  version access name signature superName interfaces)))
+    (visitMethod [ access method-name desc singature exceptions] 
       (let [delegateMethodVisitor (.visitMethod delegate access method-name desc singature exceptions)]
         (if-not 
            (.equals method-name "<clinit>")
           (create-perf-adding-method-visitor delegateMethodVisitor @curr-class-name method-name)
           delegateMethodVisitor)))
     ;; stupid code starts
-    (visitAnnotation [this x y]
+    (visitAnnotation [ x y]
       (.visitAnnotation delegate x y))
-    (visitAttribute [this x]
+    (visitAttribute [ x]
       (.visitAttribute delegate x))
-    (visitEnd [this]
+    (visitEnd []
       (.visitEnd delegate))
-    (visitField [this x y z a b]
+    (visitField [ x y z a b]
       (.visitField delegate x y z a b))
-    (visitInnerClass [this x y z a]
+    (visitInnerClass [ x y z a]
       (.visitInnerClass delegate x y z a))
-    (visitOuterClass [this x y z]
+    (visitOuterClass [ x y z]
       (.visitOuterClass delegate x y z))
-    (visitSource [this x y]
+    (visitSource [ x y]
       (.visitSource delegate x y))))
 
 (defn instrument-class [fileStream]

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.imaginea.jspy</groupId>
+    <artifactId>jspy</artifactId>
+    <version>0.5.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>jspy</name>
+    <description>A simple interactive java trace utility</description>
+    <url>http://sans-sense.github.io/jspy/</url>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:https://github.com/imaginea/jspy.git</connection>
+        <developerConnection>scm:git:https://github.com/sans-sense/jspy.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/sans-sense/jspy</url>
+    </scm>
+
+    <issueManagement>
+        <system>github-issues</system>
+        <url>https://github.com/sans-sense/jspy/issues</url>
+    </issueManagement>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- dependency versions -->
+        <clojure.version>1.8.0</clojure.version>
+        <compojure.version>1.5.1</compojure.version>
+        <ring.version>1.6.0-beta1</ring.version>
+        <ring.json.version>0.4.0</ring.json.version>
+        <clj.json.version>0.5.3</clj.json.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.theoryinpractise</groupId>
+                <artifactId>clojure-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>src/main/clj</sourceDirectory>
+                    </sourceDirectories>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+      <repository>
+        <id>clojars.org</id>
+        <url>http://clojars.org/repo</url>
+      </repository>
+    </repositories>
+
+    <dependencies>
+      <dependency>
+        <groupId>org.clojure</groupId>
+        <artifactId>clojure</artifactId>
+        <version>${clojure.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun</groupId>
+        <artifactId>tools</artifactId>
+        <version>1.7.2</version>
+        <scope>system</scope>
+        <systemPath>${java.home}/../lib/tools.jar</systemPath>
+      </dependency>
+      <dependency>
+        <groupId>compojure</groupId>
+        <artifactId>compojure</artifactId>
+        <version>${compojure.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ring</groupId>
+        <artifactId>ring-jetty-adapter</artifactId>
+        <version>${ring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ring</groupId>
+        <artifactId>ring-core</artifactId>
+        <version>${ring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ring</groupId>
+        <artifactId>ring-json</artifactId>
+        <version>${ring.json.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>clj-json</groupId>
+        <artifactId>clj-json</artifactId>
+        <version>${clj.json.version}</version>
+      </dependency>
+    </dependencies>
+
+</project>

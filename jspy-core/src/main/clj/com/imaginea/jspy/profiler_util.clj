@@ -1,7 +1,7 @@
 ;;;; Utilities needed for enhancing classes and debugging
-(ns profiler-util
-  (:use [enhance-class]
-        [class-util])
+(ns com.imaginea.jspy.profiler-util
+  (:use [com.imaginea.jspy.enhance-class]
+        [com.imaginea.jspy.class-util])
   (:import
    [java.nio.channels FileChannel]
    [java.nio ByteBuffer]

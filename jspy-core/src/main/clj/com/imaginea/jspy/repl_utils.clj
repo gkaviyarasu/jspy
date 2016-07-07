@@ -1,21 +1,12 @@
 (ns ^{:doc "Repl utilities"}
-  repl-utils
-  (use [enhance-class]
-       [local-profiler]
-       [vm-command]))
+  com.imaginea.jspy.repl-utils
+  (use [com.imaginea.jspy.enhance-class]
+       [com.imaginea.jspy.local-profiler]
+       [com.imaginea.jspy.vm-command]))
 
 (defn write-file [bytes fileName ]
    (with-open [w (java.io.BufferedOutputStream. (java.io.FileOutputStream. fileName))]
      (.write w bytes)))
-
-
-(defn print-stack-trace
-  "prints the first element in the common log as a regular stack trace" []
-  (apply println 
-         (map 
-          #(str % "\n") 
-          (cheshire.core/parse-string 
-           (first @allThreadCommonLog)))))
 
 
 (defn print-exception 

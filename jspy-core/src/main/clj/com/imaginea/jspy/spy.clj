@@ -1,10 +1,11 @@
-(ns spy
+(ns com.imaginea.jspy.spy
   (:use [compojure.core]
         [ring.middleware.params]
         [ring.middleware.json]
         [ring.util.response]
+        [ring.util.mime-type]
         [ring.adapter.jetty]
-        [vm-command]
+        [com.imaginea.jspy.vm-command]
         )
   (:require [clj-json.core :as json]
             [compojure.route :as route])
@@ -17,9 +18,10 @@
    :body  data})
 
 (defn convert-and-json-response [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/json"}
-   :body  (json/generate-string data)})
+  (json-response (json/generate-string data) status))
+
+(defn- get-static-content-path []
+  (str (System/getProperty "user.dir") "/../jspy-web/src/main/resources/"))
 
 (defroutes handler 
   (GET "/" [] (redirect "/index.html"))
@@ -58,7 +60,14 @@
         (do 
           (unprofile-vm vmId)
           (json-response "{\"response\":\"done\"}")))
-  (route/resources "/")
+
+  (GET "/*" {{resource-path :*} :route-params}
+       (do
+        (some-> (file-response (str (get-static-content-path) resource-path))
+                (content-type (ext-mime-type resource-path)))))
+
+
+  (route/resources "/" )
 )
 
 
@@ -66,4 +75,11 @@
   (-> handler
     wrap-json-params wrap-params))
 
-(defonce server (run-jetty #'app {:port 8585 :join? false}))
+(defn- get-port[]
+  (Integer/parseInt (System/getProperty "jetty.port" "8585")))
+
+(defn start-server[]
+  (run-jetty #'app {:port (get-port) :join? false}))
+
+(defn exit-repl[]
+  (System/exit 0))

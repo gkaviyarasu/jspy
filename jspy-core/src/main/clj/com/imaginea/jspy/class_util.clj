@@ -1,4 +1,4 @@
-(ns class-util)
+(ns com.imaginea.jspy.class-util)
 
 (defrecord TrieNode [name children])
 

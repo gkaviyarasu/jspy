@@ -2,7 +2,7 @@
 define(["jquery","app/eventBus"], function($, eventBus){
 
     var env = {
-        "dev" : true
+        "dev" : false
     };
 
     var mockMe = {"/vms":1, "/vms/attach":1, "/vms/attached":1, "/vms/response?vmId=19791":1};

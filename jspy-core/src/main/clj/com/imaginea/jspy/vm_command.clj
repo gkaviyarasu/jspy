@@ -1,6 +1,6 @@
 (ns ^{:doc "vm-commmands used for attach, detach things apart from profiler work"}
-      vm-command
-  (:use [local-profiler])
+      com.imaginea.jspy.vm-command
+  (:use [com.imaginea.jspy.local-profiler])
   (:import 
    [sun.tools.jps Arguments Jps]
    [sun.jvmstat.monitor HostIdentifier MonitoredHost VmIdentifier MonitoredVmUtil]

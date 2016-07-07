@@ -1,6 +1,6 @@
 (ns ^{:doc "Local Profiler, runs on the same machine as the actual profiled VM"}
-  local-profiler
-  (use [profiler-util])
+  com.imaginea.jspy.local-profiler
+  (use [com.imaginea.jspy.profiler-util])
   (:import 
    [java.net ServerSocket SocketException]
    [java.io File InputStream Closeable IOException]
@@ -68,11 +68,16 @@
   (print "started work to accept profiler data"))
 
 
+(defn- get-agent-path []
+  (System/getProperty "agent.path" 
+                      (str (System/getProperty "user.dir") "/../jspy-profiler/target/custom-agent.jar")))
+
+
 (defn- load-agent [profiler profiledVm]
   (on-thread #(
                (try
                  (.loadAgent  profiledVm
-                              (str (System/getProperty "user.dir") "/profiler/agent/target/custom-agent.jar")
+                              (get-agent-path)
                               (.toString (.get-port profiler)))
                (catch IOException e 
                  (print "Problems in the agent lifecycle, could be normal too in case there is an abnormal VM termination")
@@ -120,6 +125,11 @@
       (subs response-str (.length boundary) (- (.length response-str) (.length boundary)))
       nil)))
 
+(defn- get-base-commands-path [command-file-name]
+  (str (System/getProperty "base.commands.path"
+                     (str (System/getProperty "user.dir") "/src/main/resources/commands/"))
+       command-file-name))
+
 (defprotocol Profiler
   (start-agent [this profiledVM])
   (stop-agent [this])
@@ -147,8 +157,8 @@
 
   Profiler
   (start-agent [this profiledVM] 
-    (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/basicInfo.js")))
-    (.set-command this (slurp (str (System/getProperty "user.dir") "/profiler/commands/jmxInfo.js")))
+    (.set-command this (slurp (get-base-commands-path "basicInfo.js")))
+    (.set-command this (slurp (get-base-commands-path "jmxInfo.js")))
     (start-control-server this)
     (load-agent this profiledVM))
 
