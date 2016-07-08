@@ -70,7 +70,9 @@
 
 (defn- get-agent-path []
   (System/getProperty "agent.path" 
-                      (str (System/getProperty "user.dir") "/../jspy-profiler/target/custom-agent.jar")))
+                      (str 
+                       (System/getProperty "user.dir") 
+                       "/../jspy-profiler/target/jspy-profiler.jar")))
 
 
 (defn- load-agent [profiler profiledVm]
@@ -125,10 +127,12 @@
       (subs response-str (.length boundary) (- (.length response-str) (.length boundary)))
       nil)))
 
-(defn- get-base-commands-path [command-file-name]
-  (str (System/getProperty "base.commands.path"
-                     (str (System/getProperty "user.dir") "/src/main/resources/commands/"))
-       command-file-name))
+(defn- read-resource 
+  ([resource-name] (read-resource resource-name "commands/"))
+  ([resource-name root-location]
+   (slurp 
+    (clojure.java.io/resource 
+     (str root-location resource-name)))))
 
 (defprotocol Profiler
   (start-agent [this profiledVM])
@@ -157,8 +161,8 @@
 
   Profiler
   (start-agent [this profiledVM] 
-    (.set-command this (slurp (get-base-commands-path "basicInfo.js")))
-    (.set-command this (slurp (get-base-commands-path "jmxInfo.js")))
+    (.set-command this (read-resource "basicInfo.js"))
+    (.set-command this (read-resource "jmxInfo.js"))
     (start-control-server this)
     (load-agent this profiledVM))
 

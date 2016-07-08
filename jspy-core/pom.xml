@@ -4,12 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <artifactId>jspy</artifactId>
+        <groupId>com.imaginea.jspy</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
+
     <groupId>com.imaginea.jspy</groupId>
-    <artifactId>jspy</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
+    <artifactId>jspy-core</artifactId>
     <packaging>jar</packaging>
-    <name>jspy</name>
-    <description>A simple interactive java trace utility</description>
+    <name>jspy-core</name>
+    <description>clojure backend for jspy, uses the profiler and the web ui to provide an interactive profiler </description>
     <url>http://sans-sense.github.io/jspy/</url>
     <licenses>
         <license>

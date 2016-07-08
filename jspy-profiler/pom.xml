@@ -1,12 +1,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.imaginea</groupId>
-	<artifactId>custom-agent</artifactId>
+    <parent>
+        <artifactId>jspy</artifactId>
+        <groupId>com.imaginea.jspy</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
+    </parent>
+	<groupId>com.imaginea.jspy</groupId>
+	<artifactId>jspy-profiler</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>custom-agent</name>
-	<url>http://maven.apache.org</url>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>jspy-profiler</name>
+    <description>JSPY profiler, that allows runtime bind and interactive exploration with oracle jdk inbuilt js engine</description>
+
 	<dependencies>
 		<dependency>
 			<groupId>sun.jdk</groupId>
@@ -30,7 +37,7 @@
 		</repository>
 	</repositories>
 	<build>
-		<finalName>custom-agent</finalName>
+		<finalName>jspy-profiler</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -20,8 +20,11 @@
 (defn convert-and-json-response [data & [status]]
   (json-response (json/generate-string data) status))
 
-(defn- get-static-content-path []
-  (str (System/getProperty "user.dir") "/../jspy-web/src/main/resources/"))
+(defn- static-file-response [file-name]
+  (file-response 
+   (str
+    (System/getProperty "user.dir") 
+    "/../jspy-web/src/main/resources/" file-name)))
 
 (defroutes handler 
   (GET "/" [] (redirect "/index.html"))
@@ -62,9 +65,9 @@
           (json-response "{\"response\":\"done\"}")))
 
   (GET "/*" {{resource-path :*} :route-params}
-       (do
-        (some-> (file-response (str (get-static-content-path) resource-path))
-                (content-type (ext-mime-type resource-path)))))
+       (some-> 
+        ((apply some-fn [static-file-response resource-response]) resource-path)
+        (content-type (ext-mime-type resource-path))))
 
 
   (route/resources "/" )
