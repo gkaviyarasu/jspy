@@ -63,6 +63,16 @@
                             <goal>compile</goal>
                         </goals>
                     </execution>
+                    <execution>
+                      <id>exec-clojure-script</id>
+                      <phase>verify</phase>
+                      <goals>
+                        <goal>run</goal>
+                      </goals>
+                      <configuration>
+                        <script>src/build/scripts/runserver.clj</script>
+                      </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

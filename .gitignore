@@ -15,3 +15,5 @@ sandbox
 .classpath
 .project
 .settings
+dist
+local

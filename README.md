@@ -8,14 +8,14 @@ A simple java trace utility
 
 ## Usage
 
-1. mvn exec:java , it will start jspy at port 8585
+1. mvn verify , it will start jspy at port 8585
 1. open http://localhost:8585, it will show all the currently running VMs on left panel.
 1. Click on any vmid, it will do an automatic attach and show classloader information
 1. To trace all classes in a jar, select "show class locations", choose the jar or folder with the classes and click "Start Profiling"
 1. Under the "Start Profiling" button, we can now see a tree structure with running methods
 1. we can attach to multiple vms or quickly switch between vms and other fun stuff 
 
-## Dev
+## Devmvn
 1. cd jspy-core  
 1. mvn clojure:repl  
 1. (use 'com.imaginea.jspy.spy)  
