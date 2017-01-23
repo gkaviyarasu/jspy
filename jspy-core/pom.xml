@@ -70,7 +70,7 @@
                         <goal>run</goal>
                       </goals>
                       <configuration>
-                        <script>src/build/scripts/runserver.clj</script>
+                        <script>./src/main/resources/runserver.clj</script>
                       </configuration>
                     </execution>
                 </executions>
