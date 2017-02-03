@@ -1,7 +1,7 @@
 (ns ^{:doc "Byte code magic to add entry exit methods"
        :author "Apurba Nath"}
   com.imaginea.jspy.enhance-class
-  (import [clojure.asm ClassReader ClassVisitor ClassWriter Opcodes MethodVisitor]))
+  (import [org.objectweb.asm ClassReader ClassVisitor ClassWriter Opcodes MethodVisitor]))
 
 (defrecord InstrumentedClass [name bytes])
 
@@ -12,7 +12,7 @@
     ;; (println (str "adding " stage ))
     (.visitLdcInsn writer class-name)
     (.visitLdcInsn writer method-name)
-    (.visitMethodInsn writer Opcodes/INVOKESTATIC "org/apurba/profiler/DataCollector" stage "(Ljava/lang/String;Ljava/lang/String;)V")))
+    (.visitMethodInsn writer Opcodes/INVOKESTATIC "org/apurba/profiler/DataCollector" stage "(Ljava/lang/String;Ljava/lang/String;)V" false)))
 
 
 (defn create-perf-adding-method-visitor [delegate class-name method-name]
@@ -46,8 +46,8 @@
       (.visitTypeInsn delegate opcode type))
     (visitFieldInsn [ opcode owner name desc]
       (.visitFieldInsn delegate opcode owner name desc))
-    (visitMethodInsn [ opcode owner name desc]
-      (.visitMethodInsn delegate opcode owner name desc))
+    (visitMethodInsn [ opcode owner name desc intf]
+      (.visitMethodInsn delegate opcode owner name desc intf))
     (visitJumpInsn [ opcode label]
       (.visitJumpInsn delegate opcode label))
     (visitLabel [ label]

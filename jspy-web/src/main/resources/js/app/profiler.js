@@ -135,10 +135,7 @@ define(["jquery", "app/eventBus", "app/renderers", "app/commandManager", "app/tr
             } else {
                 var classLocations = [];
                 renderer.getMainSection(".level1 li input:checkbox:checked").each(function(){
-                    classLocations.push($(this).next('span').text().replace(/"/g,'').replace("file:",""));
-                });
-                renderer.getMainSection(".tree .pathTree li input:checkbox:checked").each(function(){
-                    classLocations.push($(this).val().replace(/"/g,'').replace("file:",""));
+                    classLocations.push(unescape($(this).next('span').text().replace(/"/g,'').replace("file:","")));
                 });
                 
                 if (classLocations.length > 0) {

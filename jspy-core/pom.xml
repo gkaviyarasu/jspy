@@ -42,6 +42,7 @@
         <ring.version>1.6.0-beta1</ring.version>
         <ring.json.version>0.4.0</ring.json.version>
         <clj.json.version>0.5.3</clj.json.version>
+        <asm.version>5.1</asm.version>
     </properties>
 
     <build>
@@ -123,6 +124,13 @@
         <artifactId>clj-json</artifactId>
         <version>${clj.json.version}</version>
       </dependency>
+      <!-- https://mvnrepository.com/artifact/org.ow2.asm/asm -->
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+
     </dependencies>
 
 </project>
